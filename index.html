@@ -201,7 +201,7 @@ input, select { font-family: inherit; }
   background: var(--sb-active-bg);
   font-weight: 600;
 }
-.nav-item svg { flex-shrink: o; opacity: .65; }
+.nav-item svg { flex-shrink: 0; opacity: .65; }
 .nav-item.active svg { opacity: 1; }
 .nav-item:hover svg { opacity: .9; }
 
@@ -301,8 +301,7 @@ input, select { font-family: inherit; }
   padding: 22px 26px;
   margin-bottom: 20px;
 }
-
-/* card-title {
+.card-title {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
   font-size: 10.5px;
@@ -666,7 +665,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
 ════════════════════════════════════════════════════ -->
 <aside class="sidebar">
   <div class="sidebar-brand">
-    <img src="data:image/png;base64,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" alt="Patrimar" style="width:auto;height:52px;display:block;margin-bottom:6px;">
+    <img src="data:image/png;base64,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" alt="Patrimar" style="width:auto;height:52px;display:block;margin-bottom:6px;">
     <div class="sidebar-sub">Precificação Hedônica</div>
   </div>
 
@@ -682,7 +681,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
     </div>
     <div class="nav-item" onclick="switchTab('premios', this)">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="8" width="4" height="13"/><rect x="17" y="4" width="4" height="17"/></svg>
-      Prémios & Gráficos
+      Prêmios & Gráficos
     </div>
     <div class="nav-item" onclick="switchTab('calculadora', this)">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h4"/></svg>
@@ -706,7 +705,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
 </aside>
 
 <!-- ════════════════════════════════════════════════════
-     MAIN CONTENT 
+     MAIN CONTENT
 ════════════════════════════════════════════════════ -->
 <main class="main">
 
@@ -727,12 +726,18 @@ hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Importar CSV
     </button>
+    <button id="postgres-btn" class="btn btn-secondary" onclick="loadPostgresData()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+      Carregar PostgreSQL
+    </button>
     <input type="file" id="csvInput" accept=".csv,.txt" style="display:none" onchange="handleCSV(event)">
     <button class="btn btn-secondary" onclick="downloadTemplate()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Baixar modelo CSV
     </button>
   </div>
+
+  <div id="api-status" class="card" style="display:none; margin-top:0; padding:12px 16px; font-size:12.5px"></div>
 
   <div id="data-stats" class="stats-row" style="display:none"></div>
 
@@ -748,7 +753,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
 
   <div class="card">
     <div class="card-title">Formato do CSV</div>
-    <div class="formula">apartamento,andar,area,vagas,suite,vista,orientacao,posicao,preco_m2</div>
+    <div class="formula">empreendimento,apartamento,bairro,torre,andar,area,quartos,vagas,suite,varanda_m2,cobertura,vista,orientacao,posicao,padrao_score,lazer_score,localizacao_score,fase_obra,meses_lancamento,desconto_pct,preco_m2</div>
     <div style="font-size:12.5px; color:var(--muted); line-height:2; margin-top:12px;">
       <strong style="color:var(--text)">vista:</strong>&nbsp; rua | parque | mar &ensp;·&ensp;
       <strong style="color:var(--text)">orientacao:</strong>&nbsp; N | S | L | O &ensp;·&ensp;
@@ -897,6 +902,13 @@ hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
               <option value="frente">Frente</option>
             </select>
           </div>
+          <div class="form-group"><label>Varanda (m²)</label><input type="number" id="c-varanda" value="8" min="0" max="100" oninput="calcPredict()"></div>
+          <div class="form-group"><label>Padrão (1–5)</label><input type="number" id="c-padrao" value="3" min="1" max="5" oninput="calcPredict()"></div>
+          <div class="form-group"><label>Lazer (1–5)</label><input type="number" id="c-lazer" value="3" min="1" max="5" oninput="calcPredict()"></div>
+          <div class="form-group"><label>Localização (1–5)</label><input type="number" id="c-localizacao" value="3" min="1" max="5" oninput="calcPredict()"></div>
+          <div class="form-group"><label>Tipo</label><select id="c-cobertura" onchange="calcPredict()"><option value="0">Unidade-tipo</option><option value="1">Cobertura</option></select></div>
+          <div class="form-group"><label>Meses do lançamento</label><input type="number" id="c-meses" value="12" min="0" max="60" oninput="calcPredict()"></div>
+          <div class="form-group"><label>Fase da obra</label><select id="c-fase" onchange="calcPredict()"><option value="lancamento">Lançamento</option><option value="construcao" selected>Construção</option><option value="acabamento">Acabamento</option><option value="pronto">Pronto novo</option></select></div>
         </div>
       </div>
       <div>
@@ -922,9 +934,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
     <p style="font-size:13.5px; line-height:1.78; color:var(--muted);">
       A teoria dos preços hedônicos (Lancaster, 1966; Rosen, 1974) decompõe o preço de um bem heterogêneo — como um apartamento — nos valores implícitos de seus atributos. O mercado imobiliário agrega numa única transação características estruturais (área, vagas, suíte), locacionais (andar, vista, orientação) e de vizinhança.
     </p>
-    <div class="formula">ln(preço_m²) = β₀ + β₁·andar + β₂·ln(área) + β₃·vagas + β₄·suíte + β₅·vista_parque + β₆·vista_mar + β₇·norte + β₈·leste + β₉·oeste + β₁₀·frente + ε</div>
+    <div class="formula">ln(preço_m²) = atributos físicos + f(andar) + vista×andar + qualidade + localização + fase comercial + tempo + ε</div>
     <p style="font-size:12.5px; color:var(--muted); line-height:1.72;">
-      A especificaçã log-linear é padrão na literatura (Box-Cox). O coeficiente <span class="mono">βᵢ</span> de uma variável dummy representa o prêmio percentual aproximado: <strong>prêmio = (e^βᵢ − 1) × 100%</strong>.
+      A especificação log-linear é padrão na literatura (Box-Cox). O coeficiente <span class="mono">βᵢ</span> de uma variável dummy representa o prêmio percentual aproximado: <strong>prêmio = (e^βᵢ − 1) × 100%</strong>.
     </p>
   </div>
   <div class="meth-row" style="margin-bottom:20px">
@@ -934,15 +946,19 @@ hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
     </div>
     <div class="meth-block">
       <h4>Estimação OLS</h4>
-      <p>Mínimos Quadrados Ordinários (MQO). Erros padrão clássicos. Significância: *** p&lt;0,01 · ** p&lt;0,05 · * p&lt;0,10.</p>
+      <p>Mínimos Quadrados Ordinários com erros-padrão robustos HC3, termos não lineares e interações. Significância: *** p&lt;0,01 · ** p&lt;0,05 · * p&lt;0,10.</p>
     </div>
     <div class="meth-block">
       <h4>Interpretação de ln(área)</h4>
       <p>O coeficiente é a elasticidade-área: um aumento de 1% na área altera o preço/m² em β₂%. Geralmente negativo (desconto de escala).</p>
     </div>
     <div class="meth-block">
-      <h4>Dados de exemplo</h4>
-      <p>Base sintética calibrada com parâmetros da literatura brasileira. Serve apenas para demonstração do modelo — não representa um empreendimento real.</p>
+      <h4>Validação preditiva</h4>
+      <p>Separação determinística de 80% para estimação e 20% para teste. RMSE, MAE e MAPE são calculados fora da amostra.</p>
+    </div>
+    <div class="meth-block">
+      <h4>Dados híbridos de teste</h4>
+      <p>Unidades sintéticas agrupadas em empreendimentos, calibradas por faixas publicadas do IPEAD e DataSecovi. Não representam vendas individuais reais.</p>
     </div>
   </div>
   <div class="card">
@@ -954,6 +970,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
       <div>NAKAMURA, J. <i>Índice de preços hedônicos para apartamentos: dados fiscais de Belo Horizonte.</i> Economia e Sociedade, 2018. <a href="https://www.scielo.br/j/ecos/a/wBWMPmq3vhC9T4QNN9GSBMz/?format=html&lang=pt" target="_blank" style="color:var(--gold);font-size:11px">[Scielo →]</a></div>
       <div>ROSEN, S. <i>Hedonic prices and implicit markets: product differentiation in pure competition.</i> Journal of Political Economy, 82(1), 1974.</div>
       <div>OLSZEWSKI, K. et al. <i>How much is the view worth? ML-driven hedonic pricing of real estate.</i> Landscape and Urban Planning, 2022. <a href="https://www.sciencedirect.com/science/article/pii/S014829632200039X" target="_blank" style="color:var(--gold);font-size:11px">[ScienceDirect →]</a></div>
+      <div>PAIXÃO, L. A. R. <i>Hedonic Price Methods and Real Estate Price Index: apartments in Belo Horizonte.</i> Statistika, 2023. <a href="https://doi.org/10.54694/stat.2022.46" target="_blank" style="color:var(--gold);font-size:11px">[DOI →]</a></div>
+      <div>FUNDAÇÃO IPEAD/UFMG. <i>Pesquisa do Mercado Imobiliário: Construção e Comercialização.</i> Preços de imóveis novos por tipologia, padrão e classe de bairro.</div>
     </div>
   </div>
 </section>
@@ -968,8 +986,22 @@ const S = {
   data: [],
   model: null,
   charts: {},
-  theme: 'system'
+  theme: 'system',
+  dataSource: null
 };
+
+/*
+ * PostgreSQL integration contract
+ * -------------------------------
+ * The browser calls an HTTPS API; database credentials must remain on the server.
+ * Override endpoint before this script with:
+ *   window.HEDONIC_API_CONFIG = { endpoint: 'https://example.com/api/hedonic-data' };
+ * Expected response: an array of rows or { data: [...] } using the CSV field names.
+ */
+const API_CONFIG = Object.freeze({
+  endpoint: window.HEDONIC_API_CONFIG?.endpoint || '/api/hedonic-data',
+  timeoutMs: window.HEDONIC_API_CONFIG?.timeoutMs || 15000
+});
 
 /* ══════════════════════════════════════════════════════
    THEME
@@ -1023,60 +1055,66 @@ function mulberry32(seed) {
 function generateSampleData() {
   const rng = mulberry32(2024);
   const data = [];
-  const areas   = [52,60,65,70,75,80,85,90,95,100,110,120,140];
-  const vistas  = ['rua','rua','rua','parque','parque','mar'];
-  const orients = ['N','N','S','S','L','L','O','O'];
-  const posicoes = ['frente','frente','fundos','lateral'];
-
-  const b0      =  9.18;
-  const bAndar  =  0.009;
-  const bLnArea = -0.18;
-  const bVagas  =  0.035;
-  const bSuite  =  0.045;
-  const bVisPq  =  0.118;
-  const bVisMar =  0.255;
-  const bNorte  =  0.062;
-  const bLeste  =  0.033;
-  const bOeste  = -0.015;
-  const bFrente =  0.052;
-  const baseLnArea = Math.log(85);
-
-  for (let i = 0; i < 46; i++) {
-    const andar   = Math.floor(rng() * 18) + 1;
-    const area    = areas[Math.floor(rng() * areas.length)];
-    const vagas   = [0,1,1,2][Math.floor(rng() * 4)];
-    const suite   = rng() > 0.45 ? 1 : 0;
-    const vista   = vistas[Math.floor(rng() * vistas.length)];
-    const orient  = orients[Math.floor(rng() * orients.length)];
-    const posicao = posicoes[Math.floor(rng() * posicoes.length)];
-
-    const norte  = orient === 'N' ? 1 : 0;
-    const leste  = orient === 'L' ? 1 : 0;
-    const oeste  = orient === 'O' ? 1 : 0;
-    const vPq    = vista === 'parque' ? 1 : 0;
-    const vMar   = vista === 'mar'    ? 1 : 0;
-    const frente = posicao === 'frente' ? 1 : 0;
-
-    const logP = b0
-      + bAndar  * andar
-      + bLnArea * (Math.log(area) - baseLnArea)
-      + bVagas  * vagas
-      + bSuite  * suite
-      + bVisPq  * vPq
-      + bVisMar * vMar
-      + bNorte  * norte
-      + bLeste  * leste
-      + bOeste  * oeste
-      + bFrente * frente
-      + (rng() - 0.5) * 0.14;
-
-    const ap = `${andar < 10 ? '0'+andar : andar}0${Math.floor(rng()*4)+1}`;
-    data.push({
-      id: i+1, apartamento: ap, andar, area, vagas, suite,
-      vista, orientacao: orient, posicao,
-      preco_m2: Math.round(Math.exp(logP))
-    });
-  }
+  const normal = () => Math.sqrt(-2*Math.log(Math.max(rng(),1e-9))) * Math.cos(2*Math.PI*rng());
+  const developments = [
+    {id:'NOVO-01',bairro:'Centro-Sul',padrao:5,lazer:5,loc:5,base:27000,floors:22,stage:'pronto'},
+    {id:'NOVO-02',bairro:'Centro-Sul',padrao:5,lazer:4,loc:5,base:24500,floors:18,stage:'acabamento'},
+    {id:'NOVO-03',bairro:'Pampulha',padrao:4,lazer:5,loc:4,base:14800,floors:16,stage:'construcao'},
+    {id:'NOVO-04',bairro:'Pampulha',padrao:3,lazer:4,loc:4,base:12600,floors:14,stage:'pronto'},
+    {id:'NOVO-05',bairro:'Oeste',padrao:4,lazer:4,loc:4,base:15600,floors:20,stage:'lancamento'},
+    {id:'NOVO-06',bairro:'Oeste',padrao:3,lazer:3,loc:3,base:11700,floors:12,stage:'construcao'},
+    {id:'NOVO-07',bairro:'Nordeste',padrao:3,lazer:4,loc:3,base:10400,floors:15,stage:'pronto'},
+    {id:'NOVO-08',bairro:'Noroeste',padrao:3,lazer:3,loc:3,base:9800,floors:11,stage:'acabamento'},
+    {id:'NOVO-09',bairro:'Barreiro',padrao:2,lazer:3,loc:2,base:7600,floors:10,stage:'construcao'},
+    {id:'NOVO-10',bairro:'Venda Nova',padrao:2,lazer:2,loc:2,base:7100,floors:9,stage:'lancamento'},
+    {id:'NOVO-11',bairro:'Leste',padrao:4,lazer:3,loc:4,base:16800,floors:17,stage:'pronto'},
+    {id:'NOVO-12',bairro:'Centro-Sul',padrao:5,lazer:5,loc:5,base:29200,floors:25,stage:'lancamento'}
+  ];
+  let id = 1;
+  developments.forEach((dev, devIndex) => {
+    const unobservedDevelopmentEffect = [-.10,.05,.09,-.07,.04,-.11,.08,-.05,.07,-.08,.12,-.03][devIndex];
+    const unitsPerFloor = dev.padrao >= 5 ? 2 : 4;
+    for (let andar=1; andar<=dev.floors; andar++) {
+      for (let unit=1; unit<=unitsPerFloor; unit++) {
+        const compact = dev.padrao <= 2 || (dev.padrao >= 4 && rng() < .28);
+        const areaBase = compact ? 48 : 58 + dev.padrao*14;
+        const area = Math.max(32, Math.round(areaBase + normal()*(compact?7:16) + (unit===1?8:0)));
+        const quartos = area < 55 ? 1 : area < 82 ? 2 : area < 125 ? 3 : 4;
+        const suite = area >= 68 ? (area >= 105 ? 2 : 1) : 0;
+        const vagas = area < 55 ? (rng()<.55?0:1) : area < 105 ? 1 : area < 155 ? 2 : 3;
+        const varanda_m2 = Math.max(0, Math.round((area*.09 + normal()*3)*10)/10);
+        const cobertura = andar===dev.floors && unit<=Math.max(1,Math.floor(unitsPerFloor/2)) ? 1 : 0;
+        const orientacao = ['N','L','S','O'][(unit+andar+devIndex)%4];
+        const posicao = unit<=2 ? 'frente' : unit===3 ? 'lateral' : 'fundos';
+        const vistaChance = Math.min(.78, .08 + andar/dev.floors*.56 + (dev.loc-3)*.07);
+        const vista = rng() < vistaChance ? (dev.bairro==='Pampulha' && rng()<.45 ? 'mar' : 'parque') : 'rua';
+        const meses_lancamento = Math.round(rng()*30);
+        const stageEffect = {lancamento:-.025,construcao:0,acabamento:.018,pronto:.032}[dev.stage];
+        const floorEffect = .014*Math.min(andar,8) + .006*Math.max(andar-8,0) - .00018*Math.max(andar-18,0)**2;
+        const viewBase = vista==='parque' ? .055 : vista==='mar' ? .09 : 0;
+        const viewInteraction = vista==='rua' ? 0 : .0035*Math.max(andar-4,0);
+        const orientationEffect = orientacao==='N' ? .035 : orientacao==='L' ? .018 : orientacao==='O' ? -.012 : 0;
+        const featureEffect = -.12*(Math.log(area)-Math.log(85)) + .025*vagas + .025*suite
+          + .003*varanda_m2 + .018*(dev.lazer-3) + .022*(dev.padrao-3)
+          + .026*(posicao==='frente') + .105*cobertura;
+        const timeEffect = .0045*meses_lancamento;
+        const discount = Math.max(0, .015 + rng()*.055 + (meses_lancamento>20?.012:0));
+        const sigma = .072 + .014*(dev.padrao-2) + .03*Math.abs(area-85)/100;
+        const outlier = rng()<.018 ? normal()*.16 : 0;
+        const logP = Math.log(dev.base) + unobservedDevelopmentEffect + floorEffect + viewBase + viewInteraction
+          + orientationEffect + featureEffect + stageEffect + timeEffect - discount
+          + normal()*sigma + outlier;
+        data.push({
+          id:id++, empreendimento:dev.id, apartamento:`${String(andar).padStart(2,'0')}0${unit}`,
+          bairro:dev.bairro, torre:`T${1+(devIndex%2)}`, andar, area, quartos, vagas, suite,
+          varanda_m2, cobertura, vista, orientacao, posicao, padrao_score:dev.padrao,
+          lazer_score:dev.lazer, localizacao_score:dev.loc, fase_obra:dev.stage,
+          meses_lancamento, desconto_pct:Math.round(discount*1000)/10,
+          preco_m2:Math.round(Math.exp(logP)), origem:'hibrida_calibrada'
+        });
+      }
+    }
+  });
   return data;
 }
 
@@ -1091,7 +1129,7 @@ function parseCSV(text) {
     const obj = {id: i+1};
     headers.forEach((h, j) => {
       const v = vals[j] || '';
-      if (['andar','area','vagas','suite','preco_m2'].includes(h)) obj[h] = parseFloat(v) || 0;
+      if (['andar','area','vagas','suite','preco_m2','quartos','varanda_m2','cobertura','padrao_score','lazer_score','localizacao_score','meses_lancamento','desconto_pct'].includes(h)) obj[h] = parseFloat(v) || 0;
       else obj[h] = v;
     });
     return obj;
@@ -1114,11 +1152,11 @@ function handleCSV(evt) {
 }
 
 function downloadTemplate() {
-  const header = 'apartamento,andar,area,vagas,suite,vista,orientacao,posicao,preco_m2';
+  const header = 'empreendimento,apartamento,bairro,torre,andar,area,quartos,vagas,suite,varanda_m2,cobertura,vista,orientacao,posicao,padrao_score,lazer_score,localizacao_score,fase_obra,meses_lancamento,desconto_pct,preco_m2';
   const ex = [
-    '0101,1,80,1,0,rua,S,fundos,9800',
-    '0501,5,80,1,0,parque,N,frente,11500',
-    '1001,10,85,2,1,mar,N,frente,16200'
+    'NOVO-01,0101,Centro-Sul,T1,1,80,2,1,1,8,0,rua,S,fundos,4,4,5,construcao,8,3.5,14500',
+    'NOVO-01,0501,Centro-Sul,T1,5,80,2,1,1,8,0,parque,N,frente,4,4,5,acabamento,14,2.0,16800',
+    'NOVO-02,1801,Pampulha,T1,18,140,4,3,2,24,1,mar,N,frente,5,5,4,pronto,24,1.5,23100'
   ].join('\n');
   const blob = new Blob([header+'\n'+ex], {type:'text/csv'});
   const a = document.createElement('a');
@@ -1132,7 +1170,86 @@ function downloadTemplate() {
 ══════════════════════════════════════════════════════ */
 function loadSampleData() {
   S.data = generateSampleData();
+  S.dataSource = 'sample';
+  setApiStatus('', '');
   onDataLoaded();
+}
+
+function normalizeDatabaseRow(row, index) {
+  const number = value => {
+    const parsed = Number(String(value ?? '').replace(',', '.'));
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  return {
+    id: row.id ?? index + 1,
+    apartamento: String(row.apartamento ?? row.unidade ?? ''),
+    empreendimento: String(row.empreendimento ?? ''),
+    bairro: String(row.bairro ?? ''),
+    torre: String(row.torre ?? ''),
+    andar: number(row.andar),
+    area: number(row.area),
+    quartos: number(row.quartos),
+    vagas: number(row.vagas),
+    suite: number(row.suite),
+    varanda_m2: number(row.varanda_m2),
+    cobertura: number(row.cobertura),
+    vista: String(row.vista ?? '').toLowerCase(),
+    orientacao: String(row.orientacao ?? '').toUpperCase(),
+    posicao: String(row.posicao ?? '').toLowerCase(),
+    padrao_score: number(row.padrao_score)||3,
+    lazer_score: number(row.lazer_score)||3,
+    localizacao_score: number(row.localizacao_score)||3,
+    fase_obra: String(row.fase_obra ?? 'construcao').toLowerCase(),
+    meses_lancamento: number(row.meses_lancamento),
+    desconto_pct: number(row.desconto_pct),
+    preco_m2: number(row.preco_m2)
+  };
+}
+
+function setApiStatus(message, type = '') {
+  const el = document.getElementById('api-status');
+  if (!message) { el.style.display = 'none'; el.textContent = ''; return; }
+  el.style.display = 'block';
+  el.style.color = type === 'error' ? 'var(--danger)' : type === 'success' ? 'var(--success)' : 'var(--muted)';
+  el.textContent = message;
+}
+
+async function loadPostgresData() {
+  const button = document.getElementById('postgres-btn');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_CONFIG.timeoutMs);
+  button.disabled = true;
+  setApiStatus('Conectando à API de dados…');
+
+  try {
+    const response = await fetch(API_CONFIG.endpoint, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      signal: controller.signal
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const payload = await response.json();
+    const rawRows = Array.isArray(payload) ? payload : payload.data;
+    if (!Array.isArray(rawRows)) throw new Error('resposta sem uma lista em data');
+
+    const rows = rawRows
+      .map(normalizeDatabaseRow)
+      .filter(row => row.andar > 0 && row.area > 0 && row.preco_m2 > 0);
+    if (!rows.length) throw new Error('nenhum registro válido retornado');
+
+    S.data = rows;
+    S.dataSource = 'postgresql';
+    onDataLoaded();
+    setApiStatus(`${rows.length} registros carregados com segurança pela API PostgreSQL.`, 'success');
+  } catch (error) {
+    const detail = error.name === 'AbortError' ? 'tempo limite excedido' : error.message;
+    setApiStatus(`Não foi possível carregar o PostgreSQL: ${detail}. Os dados atuais foram preservados.`, 'error');
+  } finally {
+    clearTimeout(timeout);
+    button.disabled = false;
+  }
 }
 
 function onDataLoaded() {
@@ -1206,24 +1323,28 @@ const mat = {
       Array.from({length:n}, (_,j) =>
         Array.from({length:p}).reduce((s,_,k) => s + A[i][k]*B[k][j], 0)));
   },
-  T(A) { return A[0].map((_,j)=>A.map(r=>r[j])); },
+  T(A) { return A[0].map((_,j) => A.map(r=>r[j])); },
   inv(A) {
     const n=A.length;
     const aug = A.map((row,i) => [...row, ...Array.from({length:n},(_,j)=>j===i?1:0)]);
     for(let col=0;col<n;col++){
       let mxR=col;
-      for(let r=col+1;r<n;r++) if(Math.abs(aug[r][col])>Math.abs(aug[mxR\[col])) mxR=r;
-      [aug[col],aug[mxRU]=[aug[mxR],aug[col]];
+      for(let r=col+1;r<n;r++) if(Math.abs(aug[r][col])>Math.abs(aug[mxR][col])) mxR=r;
+      [aug[col],aug[mxR]]=[aug[mxR],aug[col]];
       const piv=aug[col][col];
       if(Math.abs(piv)<1e-12) throw new Error('Matriz singular — verifique multicolinearidade');
       for(let j=0;j<2*n;j++) aug[col][j]/=piv;
       for(let r=0;r<n;r++){
-	    if(r===col) continue;
+        if(r===col) continue;
         const f=aug[r][col];
         for(let j=0;j<2*n;j++) aug[r][j]-=f*aug[col][j];
       }
     }
-    return aug.map(r=>r.slice(n)$═══════════════════
+    return aug.map(r=>r.slice(n));
+  }
+};
+
+/* ══════════════════════════════════════════════════════
    STATISTICS
 ══════════════════════════════════════════════════════ */
 function lgamma(z) {
@@ -1283,36 +1404,56 @@ function sigStars(p) {
    BUILD DESIGN MATRIX
 ══════════════════════════════════════════════════════ */
 const VAR_NAMES = [
-  'Intercepto','Andar','ln(Área)','Vagas','Suíte',
-  'Vista Parque','Vista Mar','Norte','Leste','Oeste','Frente'
+  'Intercepto','Andar (centrado)','Andar²','ln(Área)','Vagas','Suítes',
+  'Vista Parque','Vista Água','Norte','Leste','Oeste','Frente',
+  'Andar × Parque','Andar × Água','Varanda','Qualidade do produto','Localização',
+  'Cobertura','Meses desde lançamento','Fase: acabamento','Fase: pronto'
 ];
 const VAR_NOTES = [
-  'Preço base (R$/m² na referência)','por andar adicional','elasticidade área','por Vaga','com suíte',
-  'vs. rua','vs. rua','vs. Sul','vs. Sul','vs. Sul','vs. fundos/lateral'
+  'Preço base na referência','efeito em torno do 10º','curvatura centrada / 100','elasticidade área','por vaga','por suíte',
+  'vs. rua','vs. rua','vs. Sul','vs. Sul','vs. Sul','vs. fundos/lateral',
+  'prêmio vertical / 10','prêmio vertical / 10','a cada 10 m²','média padrão+lazer, escala 1–5','escala 1–5',
+  'vs. unidade-tipo','a cada 12 meses','vs. lançamento/construção','vs. lançamento/construção'
 ];
 
+function featureRow(d) {
+  const andar = Number(d.andar)||1;
+  const area = Math.max(Number(d.area)||1,1);
+  const parque = d.vista==='parque' ? 1:0;
+  const agua = d.vista==='mar' ? 1:0;
+  const fase = d.fase_obra || 'construcao';
+  const andarCentrado = andar-10;
+  return [
+    1, andarCentrado, andarCentrado*andarCentrado/100, Math.log(area), Number(d.vagas)||0, Number(d.suite)||0,
+    parque, agua, d.orientacao==='N'?1:0, d.orientacao==='L'?1:0,
+    d.orientacao==='O'?1:0, d.posicao==='frente'?1:0,
+    andar*parque/10, andar*agua/10, (Number(d.varanda_m2)||0)/10,
+    (((Number(d.padrao_score)||3)+(Number(d.lazer_score)||3))/2)-3,
+    (Number(d.localizacao_score)||3)-3, Number(d.cobertura)||0,
+    (Number(d.meses_lancamento)||0)/12, fase==='acabamento'?1:0, fase==='pronto'?1:0
+  ];
+}
+
 function buildX(data) {
-  return data.map(d => [
-    1,
-    d.andar,
-    Math.log(d.area),
-    d.vagas,
-    d.suite,
-    d.vista==='parque' ? 1:0,
-    d.vista==='mar'    ? 1:0,
-    d.orientacao==='N' ? 1:0,
-    d.orientacao==='L' ? 1:0,
-    d.orientacao==='O' ? 1:0,
-    d.posicao==='frente' ? 1:0
-  ]);
+  return data.map(featureRow);
 }
 
 /* ══════════════════════════════════════════════════════
    OLS REGRESSION
 ══════════════════════════════════════════════════════ */
 function runOLS(data) {
-  const X = buildX(data);
-  const y = data.map(d => Math.log(d.preco_m2));
+  const train = data.filter((_,i)=>i%5!==0);
+  const test = data.filter((_,i)=>i%5===0);
+  const fullX = buildX(train);
+  const activeIndices = [0,...Array.from({length:fullX[0].length-1},(_,i)=>i+1).filter(j=>{
+    const values=fullX.map(row=>row[j]);
+    return Math.max(...values)-Math.min(...values)>1e-10;
+  })];
+  const X = fullX.map(row=>activeIndices.map(j=>row[j]));
+  if(train.length < X[0].length+10) throw new Error(`A amostra precisa superar o número de parâmetros com margem mínima de 10 graus de liberdade`);
+  const varNames=activeIndices.map(i=>VAR_NAMES[i]);
+  const varNotes=activeIndices.map(i=>VAR_NOTES[i]);
+  const y = train.map(d => Math.log(d.preco_m2));
   const n = X.length, k = X[0].length - 1;
 
   const Xt   = mat.T(X);
@@ -1331,20 +1472,58 @@ function runOLS(data) {
   const adjR2=1-(SSR/(n-k-1))/(SST/(n-1));
   const s2=SSR/(n-k-1);
 
-  const varBeta=XtXi.map(r=>r.map(v=>v*s2));
-  const se=varBeta.map((_,i)=>Math.sqrt(varBeta[i][i]));
+  const leverage = X.map(row => {
+    const left = mat.mul([row],XtXi)[0];
+    return Math.min(.999999,left.reduce((s,v,j)=>s+v*row[j],0));
+  });
+  const p = X[0].length;
+  const meat = Array.from({length:p},()=>Array(p).fill(0));
+  X.forEach((row,i)=>{
+    const u = resid[i]/Math.max(1-leverage[i],1e-6);
+    for(let a=0;a<p;a++) for(let b=0;b<p;b++) meat[a][b] += row[a]*row[b]*u*u;
+  });
+  const robustCov = mat.mul(mat.mul(XtXi,meat),XtXi);
+  const se=robustCov.map((_,i)=>Math.sqrt(Math.max(robustCov[i][i],0)));
   const tStat=beta.map((b,i)=>b/se[i]);
   const pVals=tStat.map(t=>tPValue(Math.abs(t),n-k-1));
 
   const Fstat=(SST-SSR)/k / (SSR/(n-k-1));
   const Fpval=fPValue(Fstat,k,n-k-1);
 
-  const rmse=Math.sqrt(yhat.map((h,i)=>(Math.exp(h)-data[i].preco_m2)**2).reduce((s,v)=>s+v,0)/n);
+  const trainPred = yhat.map(h=>Math.exp(h));
+  const rmse=Math.sqrt(trainPred.reduce((s,v,i)=>s+(v-train[i].preco_m2)**2,0)/n);
+  const predictRows = rows => buildX(rows).map(fullRow=>{
+    const row=activeIndices.map(j=>fullRow[j]);
+    return Math.exp(row.reduce((s,v,j)=>s+v*beta[j],0));
+  });
+  const testPred = predictRows(test);
+  const rmseTest = Math.sqrt(testPred.reduce((s,v,i)=>s+(v-test[i].preco_m2)**2,0)/test.length);
+  const maeTest = testPred.reduce((s,v,i)=>s+Math.abs(v-test[i].preco_m2),0)/test.length;
+  const mapeTest = testPred.reduce((s,v,i)=>s+Math.abs(v-test[i].preco_m2)/test[i].preco_m2,0)/test.length*100;
+  const allPred = predictRows(data);
+  const absResid = resid.map(Math.abs);
+  const residMean = resid.reduce((s,v)=>s+v,0)/n;
+  const residVar = resid.reduce((s,v)=>s+(v-residMean)**2,0)/n;
+  const skew = resid.reduce((s,v)=>s+((v-residMean)/Math.sqrt(residVar))**3,0)/n;
+  const kurt = resid.reduce((s,v)=>s+((v-residMean)/Math.sqrt(residVar))**4,0)/n;
+  const jarqueBera = n/6*(skew*skew + (kurt-3)**2/4);
+  const predictorColumns = mat.T(X).slice(1);
+  const standardized = predictorColumns.map(col=>{
+    const mean=col.reduce((s,v)=>s+v,0)/col.length;
+    const sd=Math.sqrt(col.reduce((s,v)=>s+(v-mean)**2,0)/(col.length-1))||1;
+    return col.map(v=>(v-mean)/sd);
+  });
+  const correlation = standardized.map((a)=>standardized.map(b=>a.reduce((s,v,i)=>s+v*b[i],0)/(n-1)));
+  const vif = mat.inv(correlation).map((row,i)=>row[i]);
+  const maxVIF = Math.max(...vif);
+  const maxVIFVariable = varNames[1+vif.indexOf(maxVIF)];
 
-  return { beta, se, tStat, pVals, R2, adjR2, Fstat, Fpval, n, k,
-           yhat, resid, y, ybar, s2, rmse,
-           actual: data.map(d=>d.preco_m2),
-           predicted: yhat.map(h=>Math.round(Math.exp(h))) };
+  return { beta, se, tStat, pVals, R2, adjR2, Fstat, Fpval, n:data.length,
+           trainN:n, testN:test.length, k, yhat, resid, y, ybar, s2, rmse, rmseTest,
+           maeTest, mapeTest, jarqueBera, maxVIF, maxVIFVariable, robustSE:'HC3',
+           activeIndices, varNames, varNotes,
+           actual:data.map(d=>d.preco_m2), predicted:allPred.map(Math.round),
+           predictionSigma:Math.sqrt(s2), meanAbsResidual:absResid.reduce((s,v)=>s+v,0)/n };
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1372,19 +1551,20 @@ function runModel() {
 ══════════════════════════════════════════════════════ */
 function renderModelResults(m) {
   const effectSign = (i, b) => {
-    if(i===0) return `base: ${fmtBRL(Math.round(Math.exp(b)))} R$/m²`;
-    if(i===2) return `elasticidade: ${fmtPct(b*100)}`;
+    if(i===0) return 'constante do modelo';
+    if(i===3) return `elasticidade: ${fmtPct(b*100)}`;
     const pct = (Math.exp(b)-1)*100;
     return (pct>=0?'+':'')+pct.toFixed(1)+'%';
   };
 
   const rows = m.beta.map((b,i) => {
     const p=m.pVals[i], stars=sigStars(p);
-    const eff=effectSign(i,b);
-    const pClass = b>0 && i>0 ? 'positive' : (b<0 && i>0 ? 'negative':'');
+    const originalIndex=m.activeIndices[i];
+    const eff=effectSign(originalIndex,b);
+    const pClass = b>0 && originalIndex>0 ? 'positive' : (b<0 && originalIndex>0 ? 'negative':'');
     const pFmt = p<0.001 ? '< 0,001' : p.toFixed(3).replace('.',',');
     return `<tr>
-      <td class="var-name">${VAR_NAMES[i]}<br><span style="font-size:11px;color:var(--muted)">${VAR_NOTES[i]}</span></td>
+      <td class="var-name">${m.varNames[i]}<br><span style="font-size:11px;color:var(--muted)">${m.varNotes[i]}</span></td>
       <td>${b.toFixed(4)}</td>
       <td class="${pClass}">${eff}</td>
       <td>${m.se[i].toFixed(4)}</td>
@@ -1400,9 +1580,10 @@ function renderModelResults(m) {
     <div class="stats-row">
       <div class="stat-box"><div class="label">R²</div><div class="value">${m.R2.toFixed(3)}</div><div class="note">variância explicada</div></div>
       <div class="stat-box"><div class="label">R² ajustado</div><div class="value">${m.adjR2.toFixed(3)}</div><div class="note">penalizado por k</div></div>
-      <div class="stat-box"><div class="label">Observações</div><div class="value">${m.n}</div><div class="note">gl residual: ${m.n-m.k-1}</div></div>
+      <div class="stat-box"><div class="label">Amostra</div><div class="value">${m.n}</div><div class="note">treino ${m.trainN} · teste ${m.testN}</div></div>
       <div class="stat-box"><div class="label">F-stat</div><div class="value">${m.Fstat.toFixed(1)}</div><div class="note">p ${Fp}</div></div>
-      <div class="stat-box"><div class="label">RMSE</div><div class="value">${fmtBRL(Math.round(m.rmse))}</div><div class="note">R$/m² médio</div></div>
+      <div class="stat-box"><div class="label">RMSE teste</div><div class="value">${fmtBRL(Math.round(m.rmseTest))}</div><div class="note">MAE ${fmtBRL(Math.round(m.maeTest))}</div></div>
+      <div class="stat-box"><div class="label">MAPE teste</div><div class="value">${m.mapeTest.toFixed(1)}%</div><div class="note">fora da amostra</div></div>
     </div>
     <div class="card">
       <div class="card-title">Coeficientes estimados</div>
@@ -1420,7 +1601,17 @@ function renderModelResults(m) {
         <tbody>${rows}</tbody>
       </table></div>
       <div style="margin-top:14px;font-size:11.5px;color:var(--muted)">
-        Referência: vista rua · orientação Sul · posição fundos/lateral &nbsp;·&nbsp; *** p&lt;0,01 &nbsp;·&nbsp; ** p&lt;0,05 &nbsp;·&nbsp; * p&lt;0,10
+        Erros-padrão robustos HC3 · Referência: vista rua, orientação Sul, fundos/lateral e fase de construção
+        &nbsp;·&nbsp; *** p&lt;0,01 &nbsp;·&nbsp; ** p&lt;0,05 &nbsp;·&nbsp; * p&lt;0,10
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Diagnósticos e validade</div>
+      <div class="meth-row">
+        <div class="meth-block"><h4>Generalização</h4><p>Teste fora da amostra: RMSE ${fmtBRL(Math.round(m.rmseTest))}/m² · MAE ${fmtBRL(Math.round(m.maeTest))}/m² · MAPE ${m.mapeTest.toFixed(1)}%.</p></div>
+        <div class="meth-block"><h4>Inferência robusta</h4><p>Erros-padrão HC3, apropriados quando a dispersão dos preços não é constante.</p></div>
+        <div class="meth-block"><h4>Normalidade dos resíduos</h4><p>Jarque–Bera: ${m.jarqueBera.toFixed(2)}. Deve ser interpretado em conjunto com a distribuição visual dos resíduos.</p></div>
+        <div class="meth-block"><h4>Multicolinearidade</h4><p>Maior VIF: ${m.maxVIF.toFixed(2)} (${m.maxVIFVariable}). Valores elevados indicam coeficientes individuais instáveis.</p></div>
       </div>
     </div>`;
 }
@@ -1428,11 +1619,20 @@ function renderModelResults(m) {
 /* ══════════════════════════════════════════════════════
    PREDICTION
 ══════════════════════════════════════════════════════ */
-function predictUnit(vars, beta) {
-  const [b0,bAndar,bLnArea,bVagas,bSuite,bVPq,bVMar,bN,bL,bO,bF] = beta;
-  return b0 + bAndar*vars.andar + bLnArea*Math.log(vars.area) + bVagas*vars.vagas
-       + bSuite*vars.suite + bVPq*vars.vistaPq + bVMar*vars.vistaMar
-       + bN*vars.norte + bL*vars.leste + bO*vars.oeste + bF*vars.frente;
+function predictUnit(vars, model) {
+  const row = featureRow({
+    ...vars,
+    vista: vars.vista || (vars.vistaMar ? 'mar' : vars.vistaPq ? 'parque' : 'rua'),
+    orientacao: vars.orientacao || (vars.norte ? 'N' : vars.leste ? 'L' : vars.oeste ? 'O' : 'S'),
+    posicao: vars.posicao || (vars.frente ? 'frente' : 'fundos')
+  });
+  const activeRow=model.activeIndices.map(index=>row[index]);
+  return activeRow.reduce((sum,value,index)=>sum+value*model.beta[index],0);
+}
+
+function modelCoefficient(model, originalIndex) {
+  const position=model.activeIndices.indexOf(originalIndex);
+  return position<0 ? 0 : model.beta[position];
 }
 
 function calcPredict() {
@@ -1447,29 +1647,34 @@ function calcPredict() {
   const posicao= document.getElementById('c-posicao').value;
 
   const vars = {
-    andar, area, vagas, suite,
-    vistaPq: vista==='parque'?1:0, vistaMar: vista==='mar'?1:0,
-    norte: orient==='N'?1:0, leste: orient==='L'?1:0, oeste: orient==='O'?1:0,
-    frente: posicao==='frente'?1:0
+    andar, area, vagas, suite, vista, orientacao:orient, posicao,
+    varanda_m2:Number(document.getElementById('c-varanda').value)||0,
+    padrao_score:Number(document.getElementById('c-padrao').value)||3,
+    lazer_score:Number(document.getElementById('c-lazer').value)||3,
+    localizacao_score:Number(document.getElementById('c-localizacao').value)||3,
+    cobertura:Number(document.getElementById('c-cobertura').value)||0,
+    meses_lancamento:Number(document.getElementById('c-meses').value)||0,
+    fase_obra:document.getElementById('c-fase').value
   };
 
-  const logP = predictUnit(vars, m.beta);
+  const logP = predictUnit(vars, m);
   const price = Math.round(Math.exp(logP));
   const priceTotal = Math.round(price * area);
+  const intervalLow = Math.round(Math.exp(logP-1.96*m.predictionSigma));
+  const intervalHigh = Math.round(Math.exp(logP+1.96*m.predictionSigma));
 
-  const beta = m.beta;
-  const baseVars = { andar:1, area:85, vagas:1, suite:0, vistaPq:0, vistaMar:0, norte:0, leste:0, oeste:0, frente:0 };
-  const baseLog = predictUnit(baseVars, beta);
-
+  const baseVars = {andar:1,area:85,vagas:1,suite:0,vista:'rua',orientacao:'S',posicao:'fundos',
+    varanda_m2:0,padrao_score:3,lazer_score:3,localizacao_score:3,cobertura:0,meses_lancamento:0,fase_obra:'construcao'};
+  const contribution = (label, patch) => ({label,val:predictUnit({...baseVars,...patch},m)-predictUnit(baseVars,m)});
   const contrib = [
-    { label: 'Andar',       val: beta[1]*(andar-1) },
-    { label: 'Área',        val: beta[2]*(Math.log(area)-Math.log(85)) },
-    { label: 'Vagas extra', val: beta[3]*(vagas-1) },
-    { label: 'Suíte',       val: beta[4]*suite },
-    { label: 'Vista',       val: beta[5]*vars.vistaPq + beta[6]*vars.vistaMar },
-    { label: 'Orientação',  val: beta[7]*vars.norte + beta[8]*vars.leste + beta[9]*vars.oeste },
-    { label: 'Posição',     val: beta[10]*vars.frente }
-  ].filter(c => Math.abs(c.val) > 0.0001);
+    contribution('Andar',{andar}), contribution('Área',{area}), contribution('Vagas',{vagas}),
+    contribution('Suítes',{suite}), contribution('Vista',{vista,andar}),
+    contribution('Orientação',{orientacao:orient}), contribution('Posição',{posicao}),
+    contribution('Varanda',{varanda_m2:vars.varanda_m2}),
+    contribution('Padrão',{padrao_score:vars.padrao_score}), contribution('Lazer',{lazer_score:vars.lazer_score}),
+    contribution('Localização',{localizacao_score:vars.localizacao_score}), contribution('Cobertura',{cobertura:vars.cobertura}),
+    contribution('Momento',{meses_lancamento:vars.meses_lancamento}), contribution('Fase',{fase_obra:vars.fase_obra})
+  ].filter(c=>Math.abs(c.val)>0.0001);
 
   const bItems = contrib.map(c => {
     const pct = ((Math.exp(c.val)-1)*100).toFixed(1);
@@ -1482,6 +1687,7 @@ function calcPredict() {
       <div class="pr-label">Preço estimado pelo modelo hedônico</div>
       <div class="price">${fmtBRL(price)} <span class="price-unit">/m²</span></div>
       <div class="pr-sub">Total estimado (${area} m²): <strong>${fmtBRL(priceTotal)}</strong></div>
+      <div class="pr-sub">Intervalo preditivo aproximado de 95%: <strong>${fmtBRL(intervalLow)} – ${fmtBRL(intervalHigh)}/m²</strong></div>
       <div class="breakdown">
         <div class="breakdown-label">Contribuição vs. baseline · 1º andar, rua, Sul, fundos</div>
         ${bItems||'<div class="breakdown-item"><span class="attr">Atributos idênticos ao baseline</span><span class="val" style="color:rgba(255,255,255,.5)">—</span></div>'}
@@ -1491,10 +1697,12 @@ function calcPredict() {
 
 function renderCalcMeta() {
   const m = S.model;
-  const base = Math.round(Math.exp(m.beta[0] + m.beta[2]*Math.log(85) + m.beta[3]*1));
+  const baseVars={andar:1,area:85,vagas:1,suite:0,vista:'rua',orientacao:'S',posicao:'fundos',padrao_score:3,lazer_score:3,localizacao_score:3,fase_obra:'construcao'};
+  const base = Math.round(Math.exp(predictUnit(baseVars,m)));
   document.getElementById('calc-meta').innerHTML = `
     R² do modelo: <strong>${(m.R2*100).toFixed(1)}%</strong> · ${m.n} observações<br>
-    RMSE: <strong>${fmtBRL(Math.round(m.rmse))}/m²</strong> (erro típico de estimação)<br>
+    RMSE fora da amostra: <strong>${fmtBRL(Math.round(m.rmseTest))}/m²</strong><br>
+    MAPE fora da amostra: <strong>${m.mapeTest.toFixed(1)}%</strong> · erros-padrão robustos HC3<br>
     Baseline implícito: <strong>${fmtBRL(base)}/m²</strong> (1º andar, 85 m², 1 vaga, sem suíte, rua, Sul, fundos)`;
 }
 
@@ -1557,7 +1765,7 @@ function renderCharts() {
   const pricesFloor = floors.map(a => {
     const v = { andar:a, area:meanArea, vagas:meanVagas, suite:meanSuite,
       vistaPq:0,vistaMar:0,norte:0,leste:0,oeste:0,frente:0 };
-    return Math.round(Math.exp(predictUnit(v,m.beta)));
+    return Math.round(Math.exp(predictUnit(v,m)));
   });
   S.charts['chartFloor'] = new Chart(document.getElementById('chartFloor'), {
     type:'line',
@@ -1594,9 +1802,9 @@ function renderCharts() {
   // Chart 2: Vista premium
   destroyChart('chartVista');
   const baseVista = {andar:Math.round(meanAndar),area:meanArea,vagas:Math.round(meanVagas),suite:0,norte:0,leste:0,oeste:0,frente:0};
-  const pRua   = Math.round(Math.exp(predictUnit({...baseVista,vistaPq:0,vistaMar:0},m.beta)));
-  const pPq    = Math.round(Math.exp(predictUnit({...baseVista,vistaPq:1,vistaMar:0},m.beta)));
-  const pMar   = Math.round(Math.exp(predictUnit({...baseVista,vistaPq:0,vistaMar:1},m.beta)));
+  const pRua   = Math.round(Math.exp(predictUnit({...baseVista,vistaPq:0,vistaMar:0},m)));
+  const pPq    = Math.round(Math.exp(predictUnit({...baseVista,vistaPq:1,vistaMar:0},m)));
+  const pMar   = Math.round(Math.exp(predictUnit({...baseVista,vistaPq:0,vistaMar:1},m)));
   S.charts['chartVista'] = new Chart(document.getElementById('chartVista'),{
     type:'bar',
     data:{
@@ -1618,10 +1826,10 @@ function renderCharts() {
   // Chart 3: Orientation premium
   destroyChart('chartOrient');
   const baseOr = {andar:Math.round(meanAndar),area:meanArea,vagas:Math.round(meanVagas),suite:0,vistaPq:0,vistaMar:0,frente:0};
-  const prS = Math.round(Math.exp(predictUnit({...baseOr,norte:0,leste:0,oeste:0},m.beta)));
-  const prN = Math.round(Math.exp(predictUnit({...baseOr,norte:1,leste:0,oeste:0},m.beta)));
-  const prL = Math.round(Math.exp(predictUnit({...baseOr,norte:0,leste:1,oeste:0},m.beta)));
-  const prO = Math.round(Math.exp(predictUnit({...baseOr,norte:0,leste:0,oeste:1},m.beta)));
+  const prS = Math.round(Math.exp(predictUnit({...baseOr,norte:0,leste:0,oeste:0},m)));
+  const prN = Math.round(Math.exp(predictUnit({...baseOr,norte:1,leste:0,oeste:0},m)));
+  const prL = Math.round(Math.exp(predictUnit({...baseOr,norte:0,leste:1,oeste:0},m)));
+  const prO = Math.round(Math.exp(predictUnit({...baseOr,norte:0,leste:0,oeste:1},m)));
   S.charts['chartOrient'] = new Chart(document.getElementById('chartOrient'),{
     type:'bar',
     data:{labels:['Sul','Norte','Leste','Oeste'],datasets:[{data:[prS,prN,prL,prO],backgroundColor:[C.c4,C.c2,C.c3,C.c3],borderRadius:6,borderSkipped:false}]},
@@ -1634,9 +1842,9 @@ function renderCharts() {
   // Chart 4: Other premiums
   destroyChart('chartOthers');
   const others = [
-    { label:'Suíte',         pct: (Math.exp(m.beta[4])-1)*100 },
-    { label:'1 vaga extra',  pct: (Math.exp(m.beta[3])-1)*100 },
-    { label:'Posição frente',pct: (Math.exp(m.beta[10])-1)*100 }
+    { label:'Suíte',         pct: (Math.exp(modelCoefficient(m,5))-1)*100 },
+    { label:'1 vaga extra',  pct: (Math.exp(modelCoefficient(m,4))-1)*100 },
+    { label:'Posição frente',pct: (Math.exp(modelCoefficient(m,11))-1)*100 }
   ];
   S.charts['chartOthers'] = new Chart(document.getElementById('chartOthers'),{
     type:'bar',
@@ -1691,12 +1899,13 @@ function fmtBRL(n) {
   return 'R$ ' + Math.round(n).toLocaleString('pt-BR');
 }
 function fmtPct(n) {
-  return (n>=0?'+':'')+n.toFixed(1)%;}
+  return (n>=0?'+':'')+n.toFixed(1)+'%';
+}
 
 /* ══════════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════════ */
 window.addEventListener('load', ()=>{
-  window.matchMedia('(prefers-color-scheme: dark) ').addEventListener('change', ()=>{ if(S.model) renderCharts(); });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ if(S.model) renderCharts(); });
 });
 </script>
