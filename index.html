@@ -1875,7 +1875,7 @@ function renderCharts() {
   S.charts['chartFit'] = new Chart(document.getElementById('chartFit'),{
     type:'scatter',
     data:{datasets:[
-      { data:scatter, backgroundColor:C.c1+'80', borderColor:C.c1, pointRadius:5, pointHoverRadius:7, borderWidth:1 },
+      { label:'Unidades observadas', data:scatter, backgroundColor:C.c1+'80', borderColor:C.c1, pointRadius:5, pointHoverRadius:7, borderWidth:1 },
       { data:[{x:mn,y:mn},{x:mx,y:mx}], type:'line', borderColor:C.c2, borderWidth:2, borderDash:[5,4], pointRadius:0, label:'Linha ideal' }
     ]},
     options:{
