@@ -4,10 +4,11 @@
   "type": "module",
   "scripts": {
     "generate:seed": "node scripts/generate-hybrid-seed.mjs",
+    "generate:seed-migration": "node scripts/generate-seed-migration.mjs",
     "test:model": "node tests/model-smoke.mjs"
   },
   "dependencies": {
-    "@netlify/functions": "^3.1.10",
-    "pg": "^8.16.3"
+    "@netlify/database": "^2.0.0",
+    "@netlify/functions": "^3.1.10"
   }
 }
