@@ -6,6 +6,35 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 1A: Recepção e preservação das planilhas do Rodolfo (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** preparação local da zona restrita para recepção de fontes
+privadas da Patrimar. Nenhuma alteração em código, modelo, frontend,
+API, Netlify ou banco. Nenhum conteúdo privado foi escrito neste
+documento (ver `docs/04-DECISIONS.md` D4/D6).
+
+**Estado confirmado antes de agir:** branch `rebuild/pricing-intelligence`,
+working tree limpo.
+
+**Ações executadas:**
+
+| Ação | Resultado |
+|---|---|
+| Criação da árvore `data/restricted/{raw/rodolfo,audit,staging,derived,quarantine}/` | subpastas criadas para preservação, auditoria (hashes/manifesto), normalização, dados derivados e triagem de arquivos suspeitos |
+| Validação com `git check-ignore -v` em arquivos de teste temporários dentro de `raw/rodolfo/` e `audit/` | ambos confirmados como ignorados pela regra `data/restricted/` do `.gitignore`; arquivos de teste removidos manualmente após a validação |
+| Criação de `data/restricted/README-LOCAL.md` (privado, ignorado pelo Git) | documenta o propósito de cada subpasta e a regra de nunca editar arquivos em `raw/rodolfo/` |
+| Verificação do conteúdo de `data/restricted/raw/rodolfo/` | pasta vazia nesta sessão — nenhuma busca automática foi feita no restante do computador |
+| Abertura da pasta no Windows Explorer | zona restrita local preparada para recepção de fontes privadas da Patrimar; recepção manual das planilhas fica a cargo do responsável do projeto |
+
+**Dados privados registrados neste documento:** nenhum. Nenhum nome de
+arquivo, nome de empreendimento ou conteúdo de planilha foi escrito
+aqui ou em qualquer outro documento público.
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 0.6: Backup remoto da fundação (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
