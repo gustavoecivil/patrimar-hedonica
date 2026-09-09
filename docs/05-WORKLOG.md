@@ -6,6 +6,45 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 0.6: Backup remoto da fundação (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** push explicitamente autorizado, limitado a dois refs.
+**Autorização:** push explícito do responsável pelo projeto, restrito a
+`rebuild/pricing-intelligence` e à tag
+`legacy-hedonica-pre-rebuild-20260909`. Sem merge em `main`, sem
+alteração em `main`, sem alteração de Netlify.
+
+**Estado confirmado antes do push:** branch `rebuild/pricing-intelligence`,
+HEAD `5ab265b` ("chore: establish Patrimar Pricing Intelligence
+baseline"), working tree limpo, tag local apontando para `7dd1d24`.
+
+**Ações executadas:**
+
+| Ação | Resultado |
+|---|---|
+| `git push -u origin rebuild/pricing-intelligence` | branch remota criada; local passa a rastrear `origin/rebuild/pricing-intelligence` |
+| `git push origin legacy-hedonica-pre-rebuild-20260909` | tag remota criada, apontando para `7dd1d24bb9fbea21e915fc9d9365a1dbec547bf0` |
+| `git ls-remote --heads origin rebuild/pricing-intelligence` | confirma a branch remota no commit `5ab265b` |
+| `git ls-remote --tags origin legacy-hedonica-pre-rebuild-20260909` | confirma a tag remota em `7dd1d24` |
+| `git branch -vv` | `main` permanece em `7dd1d24` (`[origin/main]`), sem alteração |
+| `git status` | working tree limpo antes e depois do push |
+
+**Dados privados enviados:** nenhum — o conteúdo enviado é exatamente o
+commit `5ab265b` já auditado na Fase 0.5 (`docs/`, `CLAUDE.md`,
+`AGENTS.md`, `.gitignore`), mais a tag do legado (que aponta para o
+commit legado já público em `main`). Nenhum arquivo de `data/restricted/`
+existe no repositório, portanto nada disso pôde ser enviado.
+
+**`main` alterada:** não. **Netlify alterado:** não. **Merge em `main`:**
+não realizado.
+
+**Próximo passo recomendado:** Fase 1A — recepção das planilhas do
+Rodolfo, salvando qualquer arquivo real recebido em `data/restricted/`
+antes de qualquer outra ação. Ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 0.5: Congelamento do legado e fundação segura (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
