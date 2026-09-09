@@ -10,6 +10,17 @@
 > e `pricing-variable-matrix.csv` (privados). Este documento deve ser
 > expandido com campos reais somente quando existirem de fato num
 > schema físico — ver a regra de "origem deste dicionário" abaixo.
+>
+> **Nota (Fase 2/2B):** o schema físico do Unit Price Allocation
+> Engine já existe (`database/v2/`, ver [[11-DATABASE-V2-DESIGN]]),
+> mas seus campos não estão listados abaixo porque este dicionário é
+> especificamente do contrato legado (`v_hedonic_model`/CSV/schema
+> `database/schema.sql`). Um cenário 100% sintético e público
+> (`fixtures/v2/reference_allocation_scenario.json`, ver
+> [[12-REFERENCE-ALLOCATION-ENGINE]]) já popula esse schema v2 para
+> fins de prova de conceito — **não é dado real da Patrimar nem
+> substitui este dicionário**, que continua descrevendo apenas o
+> laboratório hedônico legado.
 
 Somente campos comprovadamente existentes no repositório em 2026-09-09.
 Três representações coexistem hoje: o CSV de seed, o schema relacional

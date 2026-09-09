@@ -60,6 +60,19 @@ BROKEN_FILE_DROP = """
 DROP TABLE demo_core.widgets;
 """
 
+SEED_GOOD = """
+INSERT INTO demo_core.widgets (id, name) VALUES ('11111111-1111-1111-1111-111111111111', 'Widget A');
+INSERT INTO demo_orders.orders (id, widget_id, quantity) VALUES ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 3);
+"""
+
+SEED_MISSING_REQUIRED_COLUMN = """
+INSERT INTO demo_core.widgets (id) VALUES ('11111111-1111-1111-1111-111111111111');
+"""
+
+SEED_FK_NOT_YET_INSERTED = """
+INSERT INTO demo_orders.orders (id, widget_id, quantity) VALUES ('22222222-2222-2222-2222-222222222222', '99999999-9999-9999-9999-999999999999', 3);
+"""
+
 
 def write(tmp: Path, name: str, content: str) -> None:
     (tmp / name).write_text(content, encoding="utf-8")
@@ -106,6 +119,31 @@ def run():
         assert any("termo proibido" in f for f in findings), \
             "termo proibido presente no arquivo deveria ser sinalizado"
         shutil.rmtree(tmp5, ignore_errors=True)
+
+        # validacao de seed: caminho feliz
+        tmp6 = Path(tempfile.mkdtemp(prefix="validate-db-v2-selftest-seed-ok-"))
+        write(tmp6, "001_a.sql", VALID_FILE_A)
+        write(tmp6, "002_b.sql", VALID_FILE_B)
+        write(tmp6, "seed.sql", SEED_GOOD)
+        rc = vdb.main(["--sql-dir", str(tmp6), "--file", "001_a.sql", "--file", "002_b.sql",
+                       "--seed-file", str(tmp6 / "seed.sql")])
+        assert rc == 0, "seed sintetico valido deveria passar sem problemas"
+        shutil.rmtree(tmp6, ignore_errors=True)
+
+        # validacao de seed: coluna obrigatoria ausente
+        tmp7 = Path(tempfile.mkdtemp(prefix="validate-db-v2-selftest-seed-missing-"))
+        write(tmp7, "001_a.sql", VALID_FILE_A)
+        write(tmp7, "002_b.sql", VALID_FILE_B)
+        ddl_schema = vdb.extract_ddl_schema(tmp7, ["001_a.sql", "002_b.sql"])
+        findings = vdb.validate_seed(ddl_schema, SEED_MISSING_REQUIRED_COLUMN)
+        assert any("obrigatorias ausentes" in f for f in findings), \
+            "coluna NOT NULL sem default ausente do INSERT deveria ser sinalizada"
+        shutil.rmtree(tmp7, ignore_errors=True)
+
+        # validacao de seed: FK aponta para linha nunca inserida (ordem/dado ausente)
+        findings = vdb.validate_seed(ddl_schema, SEED_FK_NOT_YET_INSERTED)
+        assert any("nao resolvida" in f for f in findings), \
+            "FK apontando para linha inexistente/fora de ordem deveria ser sinalizada"
 
         print("OK: todas as verificacoes do teste sintetico de validate_db_v2 passaram")
         return 0

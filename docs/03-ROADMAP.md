@@ -2,10 +2,26 @@
 
 ## Fase atual
 
+**FASE 2B — Seed sintético e prova end-to-end do Unit Price
+Allocation Engine.**
+Executada em 2026-09-09 (ver [[05-WORKLOG]]). Provado que o schema v2
+(Fase 2) representa um ciclo completo de distribuição de VGV entre
+unidades usando um algoritmo de referência público e 100% sintético
+(`REFERENCE_ALLOCATION_V1`, ver [[12-REFERENCE-ALLOCATION-ENGINE]]) —
+**não** a metodologia proprietária da Patrimar. Cenário fictício (1
+empreendimento, 2 torres, 4 tipologias, 40 unidades), 2 runs
+(`SYSTEM_ONLY` e `WITH_OVERRIDE`), fechamento exato do VGV-alvo,
+override com impacto explícito no VGV, e determinismo confirmado por
+hash SHA-256 idêntico entre execuções. `scripts/validate_db_v2.py`
+estendido para validar o seed SQL gerado contra o DDL. Nenhum
+PostgreSQL real foi usado (não disponível no ambiente); nenhum dado
+privado foi incorporado; `database/schema.sql` (legado), Netlify,
+frontend e modelo OLS não foram tocados.
+
 **FASE 2 — Desenho do schema canônico PostgreSQL v2.**
 Executada em 2026-09-09 (ver [[05-WORKLOG]]). Traduzido em schema
 físico o modelo conceitual da Fase 1D, priorizando o Unit Price
-Allocation Engine (Motor B — 11 tabelas em `pricing`, schema completo,
+Allocation Engine (Motor B — 12 tabelas em `pricing`, schema completo,
 evidenciado por fórmula na Fase 1C) e criando apenas a fundação mínima
 extensível do Market Pricing Engine (Motor A — 3 tabelas em `market`,
 sem comparáveis/transações/ofertas, por falta de fonte real). Ver
@@ -88,13 +104,15 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    [[04-DECISIONS]] D6), nunca na raiz de `data/` nem em nenhum outro
    caminho versionado. **Status:** recepção (Fase 1A/1A.1), auditoria
    estrutural (Fase 1B), engenharia reversa da lógica de precificação
-   (Fase 1C), gap analysis/modelo canônico preliminar (Fase 1D) e
-   desenho do schema PostgreSQL v2 (Fase 2) concluídos. Falta a
-   Fase 2B (seed sintético e prova do motor de rateio sobre o schema
-   v2) e a validação das perguntas pendentes registradas privadamente
-   para quem forneceu a planilha original — duas delas bloqueavam
-   decisão de schema e foram resolvidas modelando para a incerteza
-   (ver [[11-DATABASE-V2-DESIGN]]); as demais continuam pendentes, ver
+   (Fase 1C), gap analysis/modelo canônico preliminar (Fase 1D),
+   desenho do schema PostgreSQL v2 (Fase 2) e prova end-to-end com
+   dados sintéticos (Fase 2B) concluídos. Falta a Fase 2C (execução
+   real do schema em PostgreSQL local ou isolado, ainda não feita —
+   toda validação até agora foi estrutural) e a validação das
+   perguntas pendentes registradas privadamente para quem forneceu a
+   planilha original — duas delas bloqueavam decisão de schema e
+   foram resolvidas modelando para a incerteza (ver
+   [[11-DATABASE-V2-DESIGN]]); as demais continuam pendentes, ver
    `data/restricted/audit/questions-for-rodolfo.md`.
 2. **Dicionário de dados** — formalizar e expandir
    [[07-DATA-DICTIONARY]] cobrindo também os dados a importar das
@@ -131,9 +149,13 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
     física mínima desde a Fase 2 — `database/v2/005_market_foundation.sql`)
     e Unit Price Allocation Engine (distribuição do VGV entre
     unidades — reconstruído com evidência na Fase 1C, schema físico
-    completo desde a Fase 2 — `database/v2/003_pricing.sql`). Falta
-    ainda a implementação do serviço/pipeline que executa o cálculo
-    sobre esse schema (Fase 2B).
+    completo desde a Fase 2 — `database/v2/003_pricing.sql`, provado
+    de ponta a ponta com algoritmo de referência 100% sintético na
+    Fase 2B — ver [[12-REFERENCE-ALLOCATION-ENGINE]]). Falta ainda
+    executar isso contra um PostgreSQL real (Fase 2C) e, no futuro,
+    formalizar um serviço/pipeline com a metodologia real da Patrimar
+    (dependente das perguntas ainda pendentes em
+    `data/restricted/audit/questions-for-rodolfo.md`).
 11. **Simulador** — evoluir a "Calculadora" atual (client-side, sessão
     única) para um simulador robusto e auditável.
 12. **Painel** — evoluir as abas atuais de `index.html` para um painel

@@ -106,3 +106,34 @@ qual motor pertence (ou se é o ponto de integração entre eles) — ver
 [[10-PRICING-DOMAIN-MODEL]] para os princípios de modelagem
 resultantes (classificação de dados, granularidade, histórico,
 versionamento, overrides, validação de invariantes).
+
+### D8 — REFERENCE_ALLOCATION_V1 é motor técnico sintético de referência, não metodologia oficial Patrimar
+**Data:** 2026-09-09
+**Decisão:** O algoritmo `REFERENCE_ALLOCATION_V1`
+(`scripts/reference_allocation_engine.py`), criado na Fase 2B para
+provar o schema PostgreSQL v2, e todo o cenário de demonstração que o
+acompanha (`fixtures/v2/reference_allocation_scenario.json`,
+`database/v2/seeds/001_demo_allocation.sql`) são **inteiramente
+sintéticos e públicos**. Eles servem exclusivamente para provar que o
+schema v2 (D7, Fase 2) é capaz de representar um ciclo completo de
+distribuição de VGV entre unidades — parâmetros, calibrações, VGV-alvo,
+unidades, cenário e empreendimento são fictícios. **Nenhum valor,
+fórmula, parâmetro ou nome deste algoritmo ou deste cenário deve ser
+tratado como, ou confundido com, a metodologia real de precificação da
+Patrimar/Rodolfo** (reconstruída privadamente na Fase 1C — ver
+[[09-PRICING-LOGIC-REVERSE-ENGINEERING]]).
+**Motivo:** era necessário provar a arquitetura de dados (schema v2)
+de ponta a ponta sem expor, reproduzir ou aproximar a fórmula
+proprietária real, que é dado privado (D4/D6) e cuja reconstrução
+ainda tem perguntas pendentes sem resposta de Rodolfo (ver
+`data/restricted/audit/questions-for-rodolfo.md`). Um algoritmo
+alternativo, público e claramente identificado como não-oficial,
+permite testar o schema sem esse risco.
+**Como aplicar:** qualquer uso futuro de `REFERENCE_ALLOCATION_V1` (ou
+de qualquer variante dele) para decisão real de precificação está
+proibido sem revisão explícita. Antes de qualquer motor real de
+precificação entrar em produção, ele deve ser validado contra a
+lógica reconstruída na Fase 1C (privadamente) e as perguntas
+pendentes de Rodolfo devem estar respondidas — ver
+[[12-REFERENCE-ALLOCATION-ENGINE]] para o algoritmo, os dados
+sintéticos e as limitações desta referência.

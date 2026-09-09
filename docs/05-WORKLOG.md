@@ -6,6 +6,85 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 2B: Seed sintético e prova end-to-end do Unit Price Allocation Engine (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** provar que o schema v2 (Fase 2) representa um ciclo
+completo de distribuição de VGV, usando **exclusivamente** dados e
+parâmetros sintéticos/públicos (`REFERENCE_ALLOCATION_V1`, ver
+[[04-DECISIONS]] D8 e [[12-REFERENCE-ALLOCATION-ENGINE]]). Nenhum dado
+privado foi utilizado; nenhum PostgreSQL real disponível no ambiente;
+`database/schema.sql` (legado), Netlify, frontend e modelo OLS não
+foram tocados.
+
+**Fonte única de verdade:**
+`fixtures/v2/reference_allocation_scenario.json` — todos os demais
+artefatos (SQL seed, resultados esperados, relatório) são gerados a
+partir dela por `scripts/generate_v2_seed.py`, nunca editados a mão.
+
+**Resultado agregado:**
+
+| Métrica | Valor |
+|---|---|
+| Empreendimento / torres / tipologias / unidades (fictícios) | 1 / 2 / 4 / 40 |
+| Runs | 2 (`RUN-SYSTEM-ONLY`, `RUN-WITH-OVERRIDE`) |
+| VGV-alvo (sintético) | R$ 10.000.000,00 |
+| VGV sistemático (soma dos preços calculados) | R$ 10.000.000,00 — fecha exatamente |
+| Validação `VGV_RECONCILIATION` | `INFO`, diferença `0.00`, em ambos os runs |
+| Override de demonstração | preço anterior R$ 125.066,70 → final R$ 175.066,70 (impacto +R$ 50.000,00) |
+| VGV final após override | R$ 10.050.000,00 (delta +R$ 50.000,00, exposto explicitamente) |
+| Hash lógico determinístico (RUN 1) | `9a955e218e71e806ab4906fbf06b0111d635649658732d4f4a6048261d3dcf8c`, idêntico em reexecuções |
+| INSERTs gerados no seed SQL | 391 (40 unidades × 2 runs × 3 tipos de ajuste = 240 `unit_adjustments`; 80 `unit_price_results`; demais tabelas de apoio) |
+| Grupos de verificação em `test_reference_allocation_engine.py` | 21 (numéricos, determinismo, sensibilidade, override, falha explícita sobre dado inválido) |
+
+**Ferramentas criadas:**
+- `scripts/reference_allocation_engine.py` — motor puro (biblioteca
+  padrão, `decimal.Decimal`, sem `float` em decisão monetária),
+  separado de qualquer persistência.
+- `scripts/generate_v2_seed.py` — gera, a partir da fixture canônica,
+  o seed SQL + resultados esperados + relatório, com IDs UUID
+  determinísticos (`uuid5`).
+- `scripts/test_reference_allocation_engine.py` — 21 grupos de
+  verificação, incluindo as 14 exigidas pela fase mais invariantes de
+  domínio e testes de sensibilidade.
+- `scripts/validate_db_v2.py` **estendido** com `--seed-file`: valida
+  o seed contra o DDL (tabelas/colunas existem, nenhum `INSERT`
+  explícito em coluna `GENERATED`, colunas `NOT NULL` sem `DEFAULT`
+  presentes, toda FK resolvível na ordem em que as linhas aparecem).
+  Teste de fumaça ampliado para confirmar que a extensão detecta de
+  fato coluna obrigatória ausente e FK não resolvida, além do caminho
+  feliz.
+
+**Regra técnica documentada (não é regra Patrimar):** o resíduo de
+arredondamento do fechamento do VGV é aplicado deterministicamente à
+unidade de maior participação (empate: menor `unit_code`). Efeito
+colateral documentado e coberto por teste: essa unidade específica não
+escala proporcionalmente ao comparar VGVs diferentes; todas as demais
+escalam dentro de 1 centavo.
+
+**Artefatos públicos criados** (100% sintéticos, versionados):
+`fixtures/v2/reference_allocation_scenario.json`,
+`reference_allocation_expected.json`, `reference_allocation_report.md`;
+`database/v2/seeds/001_demo_allocation.sql`.
+
+**Documentação pública criada/atualizada:**
+[[12-REFERENCE-ALLOCATION-ENGINE]] (novo); [[04-DECISIONS]] (D8, nova);
+[[03-ROADMAP]], [[07-DATA-DICTIONARY]] (referências sanitizadas).
+
+**Verificação de proteção de dados:** busca textual em todos os
+artefatos desta fase contra nomes/hashes/magnitudes privados
+conhecidos das Fases 1B/1C — nenhuma ocorrência.
+
+**Testes:** `npm run test:model` — **PASSOU**; `python -m py_compile`
+nos 3 scripts novos + `validate_db_v2.py` — **OK**;
+`test_reference_allocation_engine.py` (21/21),
+`test_validate_db_v2.py` (incluindo os novos casos de seed) — **todos
+passaram**. `database/schema.sql` confirmado sem alteração.
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 2: Desenho do schema canônico PostgreSQL v2 (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
