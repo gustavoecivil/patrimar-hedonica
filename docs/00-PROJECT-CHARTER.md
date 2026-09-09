@@ -25,6 +25,13 @@ entre si, um motor de preços, um simulador comercial e um painel de
 acompanhamento. Essa evolução é tratada como **hipótese/plano futuro** e
 está detalhada, sem implementação, em [[03-ROADMAP]].
 
+**Decisão arquitetural (Fase 1D, ver [[04-DECISIONS]] D7):** "motor de
+preços" acima se desdobra em dois motores conceituais separados e
+integráveis — o **Market Pricing Engine** (estima valor de mercado) e
+o **Unit Price Allocation Engine** (distribui um VGV/preço-base entre
+as unidades de um empreendimento). Ver
+[[10-PRICING-DOMAIN-MODEL]] para os princípios resultantes.
+
 ## Princípio de independência das planilhas
 
 O projeto deve ser capaz de operar e evoluir **sem depender de planilhas

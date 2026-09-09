@@ -1,5 +1,16 @@
 # 07 — Data Dictionary
 
+> **Nota (Fase 1D):** este dicionário cobre apenas o schema legado
+> (laboratório hedônico sintético). Os domínios conceituais do futuro
+> Unit Price Allocation Engine e Market Pricing Engine (ver
+> [[10-PRICING-DOMAIN-MODEL]] e [[04-DECISIONS]] D7) ainda não têm
+> campos físicos definidos — o mapeamento conceitual completo,
+> incluindo referências ao conteúdo real das planilhas privadas
+> analisadas, está em `data/restricted/audit/pricing-gap-analysis.csv`
+> e `pricing-variable-matrix.csv` (privados). Este documento deve ser
+> expandido com campos reais somente quando existirem de fato num
+> schema físico — ver a regra de "origem deste dicionário" abaixo.
+
 Somente campos comprovadamente existentes no repositório em 2026-09-09.
 Três representações coexistem hoje: o CSV de seed, o schema relacional
 (PostgreSQL) e a view de contrato `v_hedonic_model` consumida pela API e

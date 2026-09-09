@@ -2,6 +2,20 @@
 
 ## Fase atual
 
+**FASE 1D — Gap analysis e modelo canônico preliminar.**
+Executada em 2026-09-09 (ver [[05-WORKLOG]]). A partir da lógica de
+precificação reconstruída na Fase 1C, formalizada a decisão
+arquitetural de separar **Market Pricing Engine** (Motor A — estima
+valor de mercado) e **Unit Price Allocation Engine** (Motor B —
+distribui um VGV/preço-base entre unidades) — ver [[04-DECISIONS]] D7
+e [[10-PRICING-DOMAIN-MODEL]]. Produzida taxonomia de domínios, gap
+analysis, matriz de variáveis de precificação, backlog de aquisição
+de dados, e um modelo canônico preliminar (entidades/relações/
+histórico/versionamento/overrides, sem SQL) — todos privados em
+`data/restricted/audit/`, sem conteúdo proprietário na documentação
+pública. Nenhum schema físico foi criado, nenhuma migration escrita,
+nenhum banco alterado, nenhum frontend/Netlify/modelo OLS tocado.
+
 **FASE 1C — Engenharia reversa da lógica de precificação.**
 Executada em 2026-09-09 (ver [[05-WORKLOG]]). Reconstruído, com
 evidência de fórmula (nunca por suposição), o fluxo de cálculo de
@@ -56,11 +70,13 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    `data/restricted/` (zona restrita, ignorada pelo Git — ver
    [[04-DECISIONS]] D6), nunca na raiz de `data/` nem em nenhum outro
    caminho versionado. **Status:** recepção (Fase 1A/1A.1), auditoria
-   estrutural (Fase 1B) e engenharia reversa da lógica de precificação
-   (Fase 1C) concluídas. Falta a Fase 1D (gap analysis e modelo
-   canônico preliminar, ainda não iniciada) e a validação das
-   perguntas pendentes registradas privadamente para quem forneceu a
-   planilha original.
+   estrutural (Fase 1B), engenharia reversa da lógica de precificação
+   (Fase 1C) e gap analysis/modelo canônico preliminar (Fase 1D)
+   concluídos. Falta a Fase 2 (desenho do schema PostgreSQL canônico)
+   e a validação das perguntas pendentes registradas privadamente
+   para quem forneceu a planilha original — várias delas bloqueiam
+   decisões de schema/regra de negócio, ver classificação em
+   `data/restricted/audit/questions-for-rodolfo.md`.
 2. **Dicionário de dados** — formalizar e expandir
    [[07-DATA-DICTIONARY]] cobrindo também os dados a importar das
    planilhas.
@@ -77,14 +93,19 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    Secovi, ABRAINC/Fipe, etc., já citadas em `MODEL.md` como calibração,
    não como dados diretos).
 7. **Comparáveis** — módulo de seleção/análise de comparáveis de
-   mercado.
+   mercado. Domínio do Market Pricing Engine (Motor A, ver
+   [[04-DECISIONS]] D7); confirmado na Fase 1C que nenhum mecanismo
+   desse tipo existe na metodologia atual de alocação interna.
 8. **Modelo hedônico (evolução)** — avaliar efeitos fixos de
    empreendimento, tempo, seleção de estoque e política de desconto,
    conforme já apontado como limitação em `MODEL.md`.
 9. **Modelos concorrentes** — comparar o modelo hedônico OLS com
    abordagens alternativas (ex. árvores, regularização).
-10. **Motor de preços** — camada de decisão de preço além da previsão
-    pontual do modelo (regras de negócio, faixas, aprovações).
+10. **Motor de preços** — desde a Fase 1D, formalmente dois motores
+    (ver [[04-DECISIONS]] D7 e [[10-PRICING-DOMAIN-MODEL]]): Market
+    Pricing Engine (estimativa de valor de mercado) e Unit Price
+    Allocation Engine (distribuição do VGV entre unidades — já
+    reconstruído com evidência na Fase 1C).
 11. **Simulador** — evoluir a "Calculadora" atual (client-side, sessão
     única) para um simulador robusto e auditável.
 12. **Painel** — evoluir as abas atuais de `index.html` para um painel

@@ -6,6 +6,65 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 1D: Gap analysis e modelo canônico preliminar (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** modelagem conceitual e análise de lacunas a partir do
+conhecimento reconstruído nas Fases 1B/1C. Nenhum schema físico,
+migration, alteração de banco, frontend, Netlify ou modelo OLS.
+Nenhum conteúdo privado (nome de aba/campo real, fórmula, valor,
+parâmetro) reproduzido neste documento — ver [[04-DECISIONS]] D4/D6/D7
+e [[10-PRICING-DOMAIN-MODEL]].
+
+**Decisão arquitetural registrada:** separação formal entre **Market
+Pricing Engine** (Motor A — estimativa de valor de mercado) e **Unit
+Price Allocation Engine** (Motor B — distribuição do VGV entre
+unidades), com o VGV/preço-base recomendado como único ponto de
+integração entre os dois — ver [[04-DECISIONS]] D7.
+
+**Resultado agregado (números apenas, sem conteúdo):**
+
+| Métrica | Valor |
+|---|---|
+| Conceitos/domínios avaliados na taxonomia | 25 (PROJECT/DEVELOPMENT a HUMAN_REVIEW) |
+| Linhas na matriz de gap analysis | 27 |
+| — classificadas MUST_HAVE / SHOULD_HAVE / NICE_TO_HAVE | 15 / 10 / 2 |
+| — sem gap identificado (NO_GAP) | 8 |
+| — com gap de fonte de dado (MISSING_SOURCE) | 6 |
+| — com gap de definição, histórico ou governança | 4, 4, 2 respectivamente |
+| — necessárias só para alocação interna / só para mercado / para ambos | 12 / 6 / 9 |
+| Variáveis na matriz de precificação (Motor A × Motor B) | 18 |
+| — com evidência observada na metodologia atual | 10 |
+| — apoiadas pelo laboratório hedônico legado | 6 |
+| — hipótese futura, sem evidência ainda | 2 |
+| Itens no backlog de aquisição de dados | 10 (4 MUST_HAVE, 4 SHOULD_HAVE, 1 NICE_TO_HAVE, 1 RESEARCH) |
+| — bloqueantes para decisões imediatas | 4 |
+| Variáveis do modelo hedônico legado reavaliadas para o Motor A | 13 — nenhuma classificada como irrelevante; a maioria como reaproveitável com adaptação, 2 marcadas como dependentes de confirmação de dado real |
+| Perguntas para quem forneceu a planilha, reclassificadas por bloqueio | 13 — 2 bloqueiam schema, 5 bloqueiam regra de negócio, 1 bloqueia decisão de modelo, 5 não bloqueiam nada crítico agora |
+| Anomalia de fórmula da Fase 1C | preservada como evidência privada; não corrigida; registrada conceitualmente como necessidade futura de validação/versionamento/testes/rastreabilidade |
+
+**Artefatos privados criados** (todos em `data/restricted/audit/`,
+ignorados pelo Git): `pricing-gap-analysis.csv`,
+`pricing-variable-matrix.csv`, `data-acquisition-backlog.csv`,
+`preliminary-canonical-model.md` (com diagramas Mermaid),
+`gap-analysis-summary.md`. `questions-for-rodolfo.md` (da Fase 1C) foi
+atualizado com uma seção de classificação de bloqueio, sem novas
+perguntas.
+
+**Documentação pública criada/atualizada:**
+[[10-PRICING-DOMAIN-MODEL]] (novo); [[04-DECISIONS]] (D7, nova);
+[[00-PROJECT-CHARTER]], [[03-ROADMAP]], [[07-DATA-DICTIONARY]]
+(referências sanitizadas à nova decisão arquitetural).
+
+**Testes:** `npm run test:model` re-executado — **PASSOU**;
+`python -m py_compile` em `scripts/audit_xlsx.py` e
+`scripts/analyze_pricing_logic.py` — **OK**. Nenhum script novo foi
+criado nesta fase (trabalho puramente de modelagem/análise).
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 1C: Engenharia reversa da lógica de precificação (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

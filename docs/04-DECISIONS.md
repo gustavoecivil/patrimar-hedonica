@@ -79,3 +79,30 @@ ambiente de trabalho, evitando que caia no Git por descuido.
 `data/restricted/` (nunca na raiz de `data/`), e verificar com
 `git status`/`git check-ignore` que ele não ficou rastreado antes de
 qualquer `git add`.
+
+### D7 — Market Pricing Engine e Unit Price Allocation Engine são domínios separados e integráveis
+**Data:** 2026-09-09
+**Decisão:** A plataforma futura separa conceitualmente dois motores:
+o **Market Pricing Engine** (Motor A — estima quanto um produto/
+empreendimento/tipologia/unidade deveria valer frente ao mercado, a
+partir de comparáveis, transações, indicadores e modelos estatísticos)
+e o **Unit Price Allocation Engine** (Motor B — distribui um VGV/
+preço-base já definido entre as unidades de um empreendimento,
+respeitando área, área ponderada, pavimento, posição, parâmetros de
+calibração e overrides humanos). O único ponto de integração formal
+entre os dois é o VGV/preço-base recomendado, que o Motor A produz e
+o Motor B consome.
+**Motivo:** a engenharia reversa da lógica de precificação existente
+(Fase 1C, ver [[09-PRICING-LOGIC-REVERSE-ENGINEERING]]) mostrou, com
+evidência de fórmula, que a metodologia hoje em uso resolve apenas o
+problema de alocação interna (Motor B) — não estima valor de mercado.
+Separar os dois motores evita acoplar prematuramente uma lógica já
+evidenciada (alocação) a uma lógica que ainda não existe como
+mecanismo formal (precificação de mercado), e permite que cada um
+evolua e seja validado de forma independente.
+**Como aplicar:** todo desenho de schema, regra de negócio, ou
+funcionalidade de precificação a partir da Fase 1D deve declarar a
+qual motor pertence (ou se é o ponto de integração entre eles) — ver
+[[10-PRICING-DOMAIN-MODEL]] para os princípios de modelagem
+resultantes (classificação de dados, granularidade, histórico,
+versionamento, overrides, validação de invariantes).
