@@ -6,6 +6,39 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 1A.1: Fechamento da recepção das planilhas (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** registro de metadados técnicos (inventário) dos arquivos
+que Gustavo já havia copiado manualmente para a zona restrita local.
+Nenhum conteúdo interno das planilhas foi aberto, lido ou registrado.
+Nenhum arquivo original foi modificado, renomeado, movido ou
+convertido. Nenhuma alteração em código, modelo, frontend, API,
+Netlify ou banco.
+
+**Estado confirmado antes de agir:** branch `rebuild/pricing-intelligence`,
+working tree limpo; dois arquivos já presentes em
+`data/restricted/raw/rodolfo/` (recepção manual feita por Gustavo fora
+desta sessão).
+
+**Ações executadas:**
+
+| Ação | Resultado |
+|---|---|
+| Listagem de `data/restricted/raw/rodolfo/` | 2 arquivos `.xlsx` encontrados (nomes não reproduzidos aqui — ver [[04-DECISIONS]] D4/D6) |
+| Cálculo de SHA-256, tamanho e data de modificação de cada arquivo | registrado privadamente em `data/restricted/audit/manifest-recebimento.csv` (ignorado pelo Git) — colunas: `filename, extension, size_bytes, modified_time, sha256` |
+| Re-hash dos arquivos após o registro | hashes idênticos aos originais — nenhuma alteração ocorreu |
+| `git check-ignore -v` nos dois originais e no manifesto | todos confirmados ignorados pela regra `data/restricted/` do `.gitignore` |
+| `git status` / `git ls-files` | nenhum arquivo de `data/restricted/` aparece rastreado ou pendente de commit |
+
+**Dados privados registrados em documentação pública:** nenhum. Nomes
+de arquivo, nomes de empreendimento e qualquer conteúdo das planilhas
+permanecem exclusivamente em `data/restricted/` (local, fora do Git).
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 1A: Recepção e preservação das planilhas do Rodolfo (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

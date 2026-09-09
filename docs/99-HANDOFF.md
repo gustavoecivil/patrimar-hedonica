@@ -13,7 +13,7 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
 5. [[04-DECISIONS]] — regras que não devem ser quebradas sem registro.
 6. Este documento (99-HANDOFF) — estado exato da última execução.
 
-## Estado atual (2026-09-09, Fase 1A)
+## Estado atual (2026-09-09, Fase 1A.1)
 
 - **Branch de trabalho:** `rebuild/pricing-intelligence`, já enviada ao
   remote e rastreando `origin/rebuild/pricing-intelligence`. A branch
@@ -29,11 +29,14 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
 - **Zona restrita local `data/restricted/` já existe e está
   populada com a estrutura de subpastas** (Fase 1A):
   - `raw/rodolfo/` — arquivos originais recebidos, nunca editados.
-    **Vazia no momento** desta sessão; foi aberta no Windows Explorer
-    para que Gustavo copie manualmente as planilhas fornecidas por
-    Rodolfo/Patrimar.
-  - `audit/` — hashes (SHA-256), manifestos e relatórios técnicos
-    privados sobre os arquivos de `raw/`.
+    **Não está mais vazia**: Gustavo já copiou manualmente os arquivos
+    fornecidos por Rodolfo/Patrimar para essa pasta (fora desta sessão
+    de agente). Nomes de arquivo e conteúdo não são reproduzidos em
+    nenhum documento público — ver [[04-DECISIONS]] D4/D6.
+  - `audit/` — contém `manifest-recebimento.csv` (privado, ignorado
+    pelo Git): inventário técnico dos arquivos recebidos (nome,
+    extensão, tamanho em bytes, data de modificação, SHA-256).
+    Conteúdo interno das planilhas **não** foi aberto/lido nesta fase.
   - `staging/` — cópias transformadas/normalizadas para análise.
   - `derived/` — dados calculados/derivados ainda privados.
   - `quarantine/` — arquivos suspeitos/corrompidos pendentes de
@@ -44,10 +47,12 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
   ignorada pelo Git (validado com `git check-ignore -v` em arquivos de
   teste temporários, removidos após a validação) — ver
   [[04-DECISIONS]] D6.
-- **Nenhum arquivo privado foi recebido, aberto, lido ou processado
-  até agora.** Nenhuma importação para PostgreSQL, conversão de
-  Excel/CSV, ou análise de regras de negócio foi feita — tudo isso é
-  fase futura, condicionada à chegada real das planilhas.
+- **Dois arquivos originais já foram recebidos** em
+  `data/restricted/raw/rodolfo/` e catalogados (metadados + SHA-256) em
+  `data/restricted/audit/manifest-recebimento.csv`. **O conteúdo
+  interno das planilhas ainda não foi aberto/lido.** Nenhuma
+  importação para PostgreSQL, conversão de Excel/CSV, ou análise de
+  regras de negócio foi feita — isso é a Fase 1B, ainda não iniciada.
 - **Nenhum código de produção, schema de banco, ou comportamento de
   `index.html`/função Netlify foi alterado** em nenhuma fase até agora.
 - `npm run test:model` — última execução confirmada na Fase 0.5:
@@ -61,15 +66,17 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
    baseline` (`docs/`, `CLAUDE.md`, `AGENTS.md`, `.gitignore`).
 2. `e689be9` — `docs: record remote baseline backup` (apenas
    `docs/05-WORKLOG.md` e `docs/99-HANDOFF.md`).
-3. (Fase 1A) commit de documentação — `docs: prepare restricted
-   Patrimar data intake` (apenas `docs/05-WORKLOG.md` e
-   `docs/99-HANDOFF.md`, sanitizado — sem nomes de arquivo, de
-   empreendimento, ou qualquer conteúdo de planilha).
+3. `f6fc53e` — `docs: prepare restricted Patrimar data intake` (Fase
+   1A, apenas `docs/05-WORKLOG.md` e `docs/99-HANDOFF.md`, sanitizado).
+4. (Fase 1A.1) commit de documentação — `docs: record restricted data
+   receipt` (apenas `docs/05-WORKLOG.md` e `docs/99-HANDOFF.md`,
+   sanitizado — sem nomes de arquivo, de empreendimento, ou qualquer
+   conteúdo de planilha).
 
 Nenhum desses commits contém dado privado ou segredo. `data/restricted/`
 nunca foi (e não pode ser) adicionada a nenhum commit.
 
-## Arquivos criados até agora neste histórico (Fase 0 a 1A)
+## Arquivos criados até agora neste histórico (Fase 0 a 1A.1)
 
 ```
 docs/00-PROJECT-CHARTER.md
@@ -87,6 +94,8 @@ AGENTS.md
 data/restricted/                        (Fase 1A — local, NÃO versionado)
   raw/rodolfo/, audit/, staging/, derived/, quarantine/
   README-LOCAL.md                       (local, NÃO versionado)
+  raw/rodolfo/ — 2 arquivos originais recebidos (Fase 1A.1, local, NÃO versionado)
+  audit/manifest-recebimento.csv        (Fase 1A.1, local, NÃO versionado)
 ```
 
 Nenhum arquivo pré-existente do laboratório (`index.html`, `MODEL.md`,
@@ -122,9 +131,11 @@ fase até agora.
    for perdido/trocado, a árvore e qualquer arquivo já recebido nela
    precisam ser recriados/re-recebidos — nada disso está no Git por
    desenho (ver [[04-DECISIONS]] D6).
-7. **`raw/rodolfo/` está vazia no momento.** O próximo agente não deve
-   presumir que já existem planilhas recebidas sem antes checar
-   diretamente a pasta local.
+7. **`raw/rodolfo/` já contém arquivos recebidos** (2, catalogados em
+   `data/restricted/audit/manifest-recebimento.csv`), mas seu conteúdo
+   interno ainda não foi aberto/lido/validado. O próximo agente deve
+   tratar esse conteúdo como não auditado até a Fase 1B ser concluída
+   — não presumir estrutura, colunas ou qualidade dos dados.
 
 ## Comandos úteis já validados
 
@@ -141,16 +152,17 @@ git check-ignore -v data/restricted/<arquivo>               # confirma que um ar
 
 ## Próximo passo recomendado
 
-Se `data/restricted/raw/rodolfo/` continuar vazia: aguardar Gustavo
-copiar manualmente as planilhas originais para essa pasta (Explorer já
-foi aberto nela na Fase 1A).
-
-Se já houver arquivos em `data/restricted/raw/rodolfo/`: prosseguir
-para a **Fase 1B — auditoria estrutural** (inventário técnico dos
-arquivos: nome, extensão, tamanho, data de modificação, SHA-256 —
-registrado privadamente em `data/restricted/audit/`, nunca em
-documentação pública) antes de qualquer conversão, importação ou
-análise de conteúdo.
+O inventário técnico básico (nome, extensão, tamanho, data de
+modificação, SHA-256) já está feito em
+`data/restricted/audit/manifest-recebimento.csv` (Fase 1A.1). O
+próximo passo é a **Fase 1B — auditoria estrutural**: abrir os
+arquivos apenas para inspecionar estrutura (abas, cabeçalhos, tipos de
+dados aproximados) sem ainda extrair, transformar ou importar dados
+de negócio, registrando os achados privadamente em
+`data/restricted/audit/` — nunca em documentação pública. Qualquer
+conversão de Excel para CSV, importação para PostgreSQL, ou análise de
+regras de negócio continua fora de escopo até essa auditoria estrutural
+ser concluída e revisada.
 
 ## Regra para quem continuar este trabalho
 
