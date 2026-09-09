@@ -6,6 +6,79 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 1C: Engenharia reversa da lógica de precificação (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** reconstrução, com evidência de fórmula, do fluxo de
+cálculo de preço presente nos dois workbooks já auditados
+estruturalmente na Fase 1B. Nenhum banco definitivo foi desenhado,
+nenhum dado foi migrado, e nenhuma alteração foi feita em frontend,
+modelo hedônico, API ou Netlify. Nenhum conteúdo privado (nome de
+aba/campo real, fórmula específica, valor, parâmetro) é reproduzido
+neste documento — ver [[04-DECISIONS]] D4/D6 e
+[[09-PRICING-LOGIC-REVERSE-ENGINEERING]].
+
+**Cadeia de custódia:** SHA-256 dos dois originais revalidado antes e
+depois desta fase contra `data/restricted/audit/
+manifest-recebimento.csv` — idêntico. Nenhuma escrita sobre
+`raw/rodolfo/`.
+
+**Ferramenta criada:** `scripts/analyze_pricing_logic.py` (reaproveita
+o parsing de `scripts/audit_xlsx.py`; nenhuma dependência externa
+nova). Extrai constantes numéricas embutidas em fórmulas e sinaliza
+regiões onde o padrão de fórmula de uma coluna diverge do padrão
+majoritário. Validada com `--help`, `python -m py_compile`, e um
+teste de fumaça sintético (`scripts/test_analyze_pricing_logic.py`,
+sem dado real) — **PASSOU**.
+
+**Resultado agregado (números apenas, sem conteúdo):**
+
+| Métrica | Valor |
+|---|---|
+| Workbooks analisados | 2 |
+| Fluxos de precificação reconstruídos | 2 (estruturalmente idênticos entre si) |
+| Regras de negócio catalogadas | 21 |
+| — regras de agregação | 4 |
+| — regras de busca/ajuste (lookup + transformação) | 5 |
+| — regra de override explícito | 1 (+ 6 regras no total classificadas como intervenção humana opcional) |
+| — regras de saída (output) | 2 diretas + 2 de conferência agregada |
+| — regras de filtro/seleção de comparáveis externos | 0 (nenhum mecanismo desse tipo encontrado; comparação é interna, entre unidades do próprio empreendimento) |
+| Confiança das regras catalogadas | 15 ALTA, 5 MÉDIA, 1 BAIXA |
+| Constantes numéricas brutas identificadas pela ferramenta (antes de curadoria) | 807 |
+| — das quais sinalizadas como possivelmente exigindo explicação humana | 286 |
+| Parâmetros de negócio curados no catálogo | 7 |
+| Regiões de possível inconsistência de fórmula sinalizadas pela ferramenta | 101 (43 UNKNOWN, 40 possível override manual, 18 possível erro/variação) |
+| Anomalia de fórmula confirmada manualmente contra o XML bruto (não artefato da ferramenta) | 1 (presente em apenas um dos dois workbooks) |
+| Regras comuns entre os dois workbooks (alta confiança estrutural) | 19 |
+| Regras/observações exclusivas de um dos workbooks | 2 |
+| Ambiguidades críticas registradas | 5 |
+| Perguntas geradas para quem forneceu a planilha | 13 (3 críticas, 6 importantes, 4 opcionais) |
+| Classificação de automação | 8 automatizáveis agora, 3 automatizáveis com mais dados, 3 exigem regra de negócio configurável, 4 exigem julgamento humano permanente, 3 indefinidas |
+
+**Achado metodológico relevante para a ferramenta:** confirmada uma
+limitação de leitura de fórmulas compartilhadas do formato XLSX (texto
+da fórmula-mestre reaproveitado sem recalcular deslocamento relativo
+para células não-mestre do mesmo grupo). Documentada em
+[[09-PRICING-LOGIC-REVERSE-ENGINEERING]]; nenhuma regra do catálogo
+final foi baseada em fórmula não confirmada contra o XML bruto.
+
+**Artefatos privados criados** (todos em `data/restricted/audit/`,
+ignorados pelo Git): `pricing_parameters_detected.csv`,
+`formula_consistency_flags.csv`, `business_rules_catalog.csv`,
+`automation-map.csv`, `questions-for-rodolfo.md`,
+`pricing-logic-reconstruction.md`.
+
+**Documentação pública criada:**
+[[09-PRICING-LOGIC-REVERSE-ENGINEERING]] (metodologia genérica, sem
+nenhum conteúdo das planilhas).
+
+**Testes:** `npm run test:model` re-executado — **PASSOU**, mesmo
+resultado numérico das fases anteriores.
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 1B: Auditoria estrutural das planilhas do Rodolfo (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

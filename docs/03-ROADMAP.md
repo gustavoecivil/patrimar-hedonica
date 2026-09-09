@@ -2,6 +2,21 @@
 
 ## Fase atual
 
+**FASE 1C — Engenharia reversa da lógica de precificação.**
+Executada em 2026-09-09 (ver [[05-WORKLOG]]). Reconstruído, com
+evidência de fórmula (nunca por suposição), o fluxo de cálculo de
+preço presente nas duas planilhas recebidas: entradas, parâmetros,
+buscas/lookups, ajustes, agregações, e o(s) ponto(s) de override
+humano sobre o preço final. Criada a ferramenta genérica
+`scripts/analyze_pricing_logic.py` (reaproveitando
+`scripts/audit_xlsx.py`, ainda sem dependência externa) com teste de
+fumaça sintético. Toda a interpretação com conteúdo real (fórmulas,
+parâmetros, valores, nomes de aba/campo) ficou exclusivamente em
+`data/restricted/audit/` — ver [[09-PRICING-LOGIC-REVERSE-ENGINEERING]]
+para a metodologia pública, sem conteúdo privado. Não foi desenhado
+banco definitivo, migrado dado nenhum, nem alterado frontend/modelo/
+API/Netlify.
+
 **FASE 1B — Auditoria estrutural das planilhas do Rodolfo.**
 Executada em 2026-09-09 (ver [[05-WORKLOG]]). Criada a ferramenta
 genérica `scripts/audit_xlsx.py` (biblioteca padrão do Python, sem
@@ -40,9 +55,12 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    trazida para o ambiente de trabalho deve ser salva em
    `data/restricted/` (zona restrita, ignorada pelo Git — ver
    [[04-DECISIONS]] D6), nunca na raiz de `data/` nem em nenhum outro
-   caminho versionado. **Status:** recepção (Fase 1A/1A.1) e auditoria
-   estrutural (Fase 1B) concluídas; falta a engenharia reversa da
-   lógica de precificação (Fase 1C, ainda não iniciada).
+   caminho versionado. **Status:** recepção (Fase 1A/1A.1), auditoria
+   estrutural (Fase 1B) e engenharia reversa da lógica de precificação
+   (Fase 1C) concluídas. Falta a Fase 1D (gap analysis e modelo
+   canônico preliminar, ainda não iniciada) e a validação das
+   perguntas pendentes registradas privadamente para quem forneceu a
+   planilha original.
 2. **Dicionário de dados** — formalizar e expandir
    [[07-DATA-DICTIONARY]] cobrindo também os dados a importar das
    planilhas.
