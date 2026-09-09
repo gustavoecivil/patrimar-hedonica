@@ -6,6 +6,70 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 1B: Auditoria estrutural das planilhas do Rodolfo (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** auditoria estrutural (metadados, abas, fórmulas,
+dependências, conteúdo oculto, qualidade, comparação entre workbooks)
+dos dois arquivos já recebidos em `data/restricted/raw/rodolfo/`
+(Fase 1A.1). Nenhuma interpretação de regra de negócio, conversão de
+formato, importação para PostgreSQL, ou alteração de frontend/modelo/
+API/Netlify foi feita. Nenhum conteúdo privado (nome de arquivo, de
+empreendimento, de aba ou de campo) é reproduzido neste documento —
+ver [[04-DECISIONS]] D4/D6 e [[08-SPREADSHEET-AUDIT-METHOD]].
+
+**Cadeia de custódia:** SHA-256 dos dois originais recalculado antes e
+depois da auditoria e comparado com `data/restricted/audit/
+manifest-recebimento.csv` — **idêntico nas duas verificações**.
+Nenhuma escrita foi feita sobre os arquivos em `raw/rodolfo/`; a
+ferramenta os abre somente em modo leitura.
+
+**Ferramenta criada:** `scripts/audit_xlsx.py` (Python, biblioteca
+padrão apenas — `zipfile` + `xml.etree.ElementTree` — sem adicionar
+dependência externa, já que nenhuma biblioteca de leitura de XLSX
+estava disponível no ambiente e o escopo não justificou instalar uma).
+Recebe caminhos de entrada/saída por argumento; não contém nomes de
+arquivo, caminhos absolutos, hashes ou valores privados. Validada com
+`python scripts/audit_xlsx.py --help`, `python -m py_compile`, e um
+teste de fumaça com workbooks **sintéticos** gerados em memória
+(`scripts/test_audit_xlsx.py`, sem nenhum dado real) — **PASSOU**.
+
+**Resultado agregado da auditoria (números apenas, sem conteúdo):**
+
+| Métrica | Valor |
+|---|---|
+| Workbooks auditados | 2 |
+| Abas totais | 8 (4 por workbook) |
+| Abas visíveis / ocultas / muito ocultas | 8 / 0 / 0 |
+| Campos (colunas) detectados | 77 |
+| Células preenchidas (soma dos 2 workbooks) | 25.023 |
+| Células com fórmula (soma) | 18.377 |
+| Padrões únicos de fórmula (após normalização) | 430 |
+| Arestas de dependência aba→aba | 10 |
+| Vínculos externos / macros / pivot tables detectados | 0 / 0 / 0 |
+| Conteúdo oculto (nomes definidos ocultos + colunas ocultas) | 3 |
+| Campos candidatos a chave única | 0 |
+| Campos com POTENCIAL_PII=SIM | 0 |
+| Problemas de qualidade registrados | 705 (majoritariamente linhas vazias no meio de intervalos de dados, típico de planilhas com formatação além da área de dados real) |
+| Correspondências entre os 2 workbooks (abas+campos) | 10 (9 confiança ALTA, 1 BAIXA) |
+
+**Artefatos privados gerados** (todos em `data/restricted/audit/`,
+ignorados pelo Git): `workbook_inventory.csv`, `sheet_inventory.csv`,
+`field_profile.csv`, `formula_inventory.csv`,
+`dependency_inventory.csv`, `hidden_content_inventory.csv`,
+`quality_issues.csv`, `cross_workbook_mapping.csv`,
+`structural-audit.md`.
+
+**Documentação pública criada:** [[08-SPREADSHEET-AUDIT-METHOD]]
+(metodologia genérica, sem nenhum conteúdo das planilhas).
+
+**Testes:** `npm run test:model` re-executado — **PASSOU**, mesmo
+resultado numérico das fases anteriores (modelo/gerador não tocados).
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 1A.1: Fechamento da recepção das planilhas (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

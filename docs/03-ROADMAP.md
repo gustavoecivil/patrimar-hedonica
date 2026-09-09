@@ -2,6 +2,20 @@
 
 ## Fase atual
 
+**FASE 1B — Auditoria estrutural das planilhas do Rodolfo.**
+Executada em 2026-09-09 (ver [[05-WORKLOG]]). Criada a ferramenta
+genérica `scripts/audit_xlsx.py` (biblioteca padrão do Python, sem
+dependência externa nova) e seu teste de fumaça com dados sintéticos
+(`scripts/test_audit_xlsx.py`). Os dois workbooks recebidos na Fase
+1A.1 foram auditados estruturalmente (abas, campos, fórmulas,
+dependências entre abas, conteúdo oculto, qualidade de dados,
+comparação entre os dois workbooks). Todos os resultados (incluindo
+qualquer nome real de aba/campo) ficam exclusivamente em
+`data/restricted/audit/` — ver [[08-SPREADSHEET-AUDIT-METHOD]] para a
+metodologia pública, sem conteúdo privado. Nenhuma interpretação de
+regra de negócio, conversão de formato, ou importação para banco foi
+feita nesta fase.
+
 **FASE 0.5 — Congelamento do legado e fundação segura.**
 Executada em 2026-09-09 (ver [[05-WORKLOG]]). Criou tag local do legado
 (`legacy-hedonica-pre-rebuild-20260909` → `7dd1d24`), a branch
@@ -26,7 +40,9 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    trazida para o ambiente de trabalho deve ser salva em
    `data/restricted/` (zona restrita, ignorada pelo Git — ver
    [[04-DECISIONS]] D6), nunca na raiz de `data/` nem em nenhum outro
-   caminho versionado.
+   caminho versionado. **Status:** recepção (Fase 1A/1A.1) e auditoria
+   estrutural (Fase 1B) concluídas; falta a engenharia reversa da
+   lógica de precificação (Fase 1C, ainda não iniciada).
 2. **Dicionário de dados** — formalizar e expandir
    [[07-DATA-DICTIONARY]] cobrindo também os dados a importar das
    planilhas.

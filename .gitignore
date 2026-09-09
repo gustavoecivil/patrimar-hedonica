@@ -1,5 +1,7 @@
 # Dependências
 node_modules/
+__pycache__/
+*.pyc
 
 # Segredos e configuração local
 .env
