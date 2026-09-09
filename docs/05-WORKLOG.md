@@ -6,6 +6,80 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 2: Desenho do schema canônico PostgreSQL v2 (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** tradução do modelo conceitual da Fase 1D em DDL PostgreSQL
+físico, em `database/v2/`, sem tocar `database/schema.sql` (legado),
+sem migrar dado nenhum, sem alterar Netlify/frontend/modelo OLS/banco
+de produção.
+
+**Reconciliação solicitada (Passo 1):** o relatório final da Fase 1D
+dizia `ENTIDADES_CANDIDATAS=15`, mas a lista continha 16 nomes (um
+item, "`ParameterSet` / `PricingParameter`", nomeava duas entidades).
+**Número correto: 16.** Registrado em [[11-DATABASE-V2-DESIGN]] e em
+`database/v2/README.md` para não haver mais divergência entre
+documentação/modelo privado/schema físico.
+
+**Perguntas bloqueadoras de schema (Q-05, Q-12):** resolvidas
+modelando para a incerteza em vez de assumir uma hipótese — Q-05
+(significado de um atributo de posição) virou um campo de texto
+genérico e extensível; Q-12 (frequência de recalibração) deixou de
+bloquear porque o schema já versiona toda calibração por padrão,
+independente da frequência real. Nenhuma das duas exigiu resposta de
+Rodolfo para prosseguir com um desenho seguro.
+
+**Resultado agregado (números apenas, sem conteúdo):**
+
+| Métrica | Valor |
+|---|---|
+| Schemas PostgreSQL criados | 4 (`core`, `pricing`, `audit`, `market`) |
+| Tabelas físicas — core / pricing / audit / market | 4 / 12 / 2 / 3 (total 21) |
+| Views | 1 (`pricing.v_unit_price_current`, semântica documentada explicitamente) |
+| Foreign keys (inline + `ALTER TABLE` para as 4 dependências cruzadas entre schemas) | 34 |
+| Constraints `UNIQUE` | 11 |
+| `CHECK` constraints | 36 |
+| Índices em `006_indexes.sql` (além dos implícitos de PK/UNIQUE) | 25, incluindo 1 índice único parcial (1 cenário ACTIVE por empreendimento) |
+| Histórico preservado por padrão | parâmetros, calibrações, VGV, resultados por run, overrides — todos versionados/append-only |
+| Overrides | append-only, nunca `UPDATE` do valor histórico; FK composta garante coerência com o resultado calculado |
+| Trigger simples criada | 1 (consistência torre/empreendimento em `core.units`) |
+| Decisões adiadas | `market.observations/comparables/transactions/listings`, `audit.decisions`, `raw`/`staging` físicos — todas documentadas, nenhuma tabela vazia criada por antecipação |
+
+**Bug encontrado e corrigido durante a revisão manual do DDL** (sem
+PostgreSQL local disponível para testar de fato): a view inicial usava
+`DISTINCT ON` numa CTE separada de seu `ORDER BY`, o que não garante a
+ordem em PostgreSQL — corrigido unificando `DISTINCT ON` e `ORDER BY`
+na mesma consulta antes de considerar o DDL válido.
+
+**Ferramenta criada:** `scripts/validate_db_v2.py` (Python, biblioteca
+padrão apenas) — validação estrutural genérica de um conjunto de
+arquivos `.sql`: arquivos existem, nenhum `DROP` destrutivo,
+`snake_case`, toda referência aponta para algo já criado no ponto da
+execução. Teste de fumaça sintético
+(`scripts/test_validate_db_v2.py`) confirma que a ferramenta detecta
+de fato: referência para frente, nome fora do padrão, `DROP`
+destrutivo, e termo proibido — não só que aprova arquivos válidos.
+Executada com sucesso contra os 7 arquivos reais de `database/v2/`.
+
+**Artefatos privados criados:**
+`data/restricted/audit/database-v2-mapping.md` (mapeamento dos
+conceitos reais das planilhas para as tabelas físicas v2 — nenhum
+valor deste arquivo aparece no SQL ou na documentação pública).
+
+**Documentação pública criada:** [[11-DATABASE-V2-DESIGN]] (decisões
+de modelagem, estratégia Legacy→V2 REUSE/TRANSFORM/DEPRECATE/
+KEEP_FOR_DEMO, sem conteúdo privado).
+
+**Testes:** `npm run test:model` — **PASSOU**, mesmo resultado das
+fases anteriores; `python -m py_compile` nos 3 scripts — **OK**;
+`scripts/test_audit_xlsx.py`, `test_analyze_pricing_logic.py`,
+`test_validate_db_v2.py` — **todos passaram**. `database/schema.sql`
+confirmado sem alteração (`git status`/`git diff` vazios).
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 1D: Gap analysis e modelo canônico preliminar (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

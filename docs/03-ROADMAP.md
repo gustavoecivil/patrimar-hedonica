@@ -2,6 +2,23 @@
 
 ## Fase atual
 
+**FASE 2 — Desenho do schema canônico PostgreSQL v2.**
+Executada em 2026-09-09 (ver [[05-WORKLOG]]). Traduzido em schema
+físico o modelo conceitual da Fase 1D, priorizando o Unit Price
+Allocation Engine (Motor B — 11 tabelas em `pricing`, schema completo,
+evidenciado por fórmula na Fase 1C) e criando apenas a fundação mínima
+extensível do Market Pricing Engine (Motor A — 3 tabelas em `market`,
+sem comparáveis/transações/ofertas, por falta de fonte real). Ver
+[[11-DATABASE-V2-DESIGN]] para a documentação pública (decisões de
+modelagem, estratégia de migração do legado, sem conteúdo privado).
+Todo o DDL vive em `database/v2/`, em schemas próprios (`core`,
+`pricing`, `audit`, `market`) — `database/schema.sql` (legado)
+**não foi alterado** e continua em uso. Nenhuma migração de dado real
+ou sintético foi executada; nenhum banco de produção, Netlify,
+frontend ou modelo OLS foi tocado. Validação do DDL feita
+estruturalmente (`scripts/validate_db_v2.py`, sem PostgreSQL/Docker
+disponíveis no ambiente), com teste de fumaça sintético.
+
 **FASE 1D — Gap analysis e modelo canônico preliminar.**
 Executada em 2026-09-09 (ver [[05-WORKLOG]]). A partir da lógica de
 precificação reconstruída na Fase 1C, formalizada a decisão
@@ -71,22 +88,29 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    [[04-DECISIONS]] D6), nunca na raiz de `data/` nem em nenhum outro
    caminho versionado. **Status:** recepção (Fase 1A/1A.1), auditoria
    estrutural (Fase 1B), engenharia reversa da lógica de precificação
-   (Fase 1C) e gap analysis/modelo canônico preliminar (Fase 1D)
-   concluídos. Falta a Fase 2 (desenho do schema PostgreSQL canônico)
-   e a validação das perguntas pendentes registradas privadamente
-   para quem forneceu a planilha original — várias delas bloqueiam
-   decisões de schema/regra de negócio, ver classificação em
+   (Fase 1C), gap analysis/modelo canônico preliminar (Fase 1D) e
+   desenho do schema PostgreSQL v2 (Fase 2) concluídos. Falta a
+   Fase 2B (seed sintético e prova do motor de rateio sobre o schema
+   v2) e a validação das perguntas pendentes registradas privadamente
+   para quem forneceu a planilha original — duas delas bloqueavam
+   decisão de schema e foram resolvidas modelando para a incerteza
+   (ver [[11-DATABASE-V2-DESIGN]]); as demais continuam pendentes, ver
    `data/restricted/audit/questions-for-rodolfo.md`.
 2. **Dicionário de dados** — formalizar e expandir
    [[07-DATA-DICTIONARY]] cobrindo também os dados a importar das
    planilhas.
 3. **RAW / STAGING / CORE** — camadas de dados para ingestão bruta,
    tratamento e modelo de domínio limpo, substituindo o CSV sintético
-   único atual.
+   único atual. **Status:** `core` já existe como schema físico desde
+   a Fase 2 (`database/v2/002_core.sql`); `raw`/`staging` continuam
+   documentadas como plano futuro, sem tabela física — ver
+   [[11-DATABASE-V2-DESIGN]].
 4. **PostgreSQL/PostGIS** — evoluir o schema atual (`database/schema.sql`)
    para suportar dados geoespaciais reais (hoje `developments` já tem
    `latitude`/`longitude` como `NUMERIC`, mas não há extensão PostGIS
-   nem índices espaciais).
+   nem índices espaciais). O schema v2 (`database/v2/`, Fase 2)
+   também tem `core.developments.latitude`/`longitude` como `NUMERIC`
+   simples — PostGIS continua não implementado em nenhum dos dois.
 5. **Parâmetros** — parametrização de premissas de negócio (ex.: tabelas
    de referência, faixas de mercado) fora do código.
 6. **Dados públicos** — incorporar fontes públicas adicionais (IPEAD,
@@ -103,9 +127,13 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    abordagens alternativas (ex. árvores, regularização).
 10. **Motor de preços** — desde a Fase 1D, formalmente dois motores
     (ver [[04-DECISIONS]] D7 e [[10-PRICING-DOMAIN-MODEL]]): Market
-    Pricing Engine (estimativa de valor de mercado) e Unit Price
-    Allocation Engine (distribuição do VGV entre unidades — já
-    reconstruído com evidência na Fase 1C).
+    Pricing Engine (estimativa de valor de mercado, apenas fundação
+    física mínima desde a Fase 2 — `database/v2/005_market_foundation.sql`)
+    e Unit Price Allocation Engine (distribuição do VGV entre
+    unidades — reconstruído com evidência na Fase 1C, schema físico
+    completo desde a Fase 2 — `database/v2/003_pricing.sql`). Falta
+    ainda a implementação do serviço/pipeline que executa o cálculo
+    sobre esse schema (Fase 2B).
 11. **Simulador** — evoluir a "Calculadora" atual (client-side, sessão
     única) para um simulador robusto e auditável.
 12. **Painel** — evoluir as abas atuais de `index.html` para um painel
