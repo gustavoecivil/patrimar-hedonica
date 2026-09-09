@@ -137,3 +137,29 @@ lógica reconstruída na Fase 1C (privadamente) e as perguntas
 pendentes de Rodolfo devem estar respondidas — ver
 [[12-REFERENCE-ALLOCATION-ENGINE]] para o algoritmo, os dados
 sintéticos e as limitações desta referência.
+
+### D9 — Testes de banco real usam um servidor PostgreSQL local pré-existente, isolado por banco/role dedicados, sem alterar sua configuração global
+**Data:** 2026-09-09
+**Decisão:** A Fase 2C executou o schema v2 e o seed sintético contra
+um PostgreSQL 18 já instalado e em uso no ambiente local (não
+instalado nesta fase). O isolamento é feito por um banco de dados
+dedicado (`patrimar_pricing_v2_test`) e uma role própria com senha
+gerada aleatoriamente nesta sessão, nunca reaproveitada de nenhuma
+credencial real do usuário. **Nenhuma configuração global do servidor
+(`postgresql.conf`, `pg_hba.conf`, `listen_addresses`) foi alterada**
+— o servidor pré-existente já restringe autenticação a conexões via
+loopback (`127.0.0.1`/`::1`) por `pg_hba.conf`, independentemente do
+endereço de bind, e essa configuração herdada não foi tocada.
+**Motivo:** o servidor local pode ter outros bancos/projetos do
+usuário — alterar configuração global para uma necessidade estreita
+de teste seria escopo maior que o necessário e arriscaria efeitos
+colaterais fora do controle desta tarefa. Isolar por banco/role
+dedicados atinge o mesmo objetivo (ambiente de teste seguro e
+descartável) sem esse risco.
+**Como aplicar:** qualquer script que crie, aplique DDL, verifique ou
+remova esse banco de teste deve recusar operar se o nome não contiver
+explicitamente `_test` (ver `scripts/db_v2_*.ps1`). Credenciais desses
+testes vivem apenas em arquivos locais cobertos por `.gitignore`
+(`.env.*`), nunca commitadas. O banco de teste criado nesta fase
+permanece ativo entre sessões até uma decisão explícita de removê-lo
+— ver [[99-HANDOFF]].

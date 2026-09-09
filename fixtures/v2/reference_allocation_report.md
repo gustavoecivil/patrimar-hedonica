@@ -8,7 +8,7 @@
 - VGV sistemático (soma dos preços calculados): 10000000.00
 - Validação VGV_RECONCILIATION: INFO (diferença: 0.00)
 - Soma das participações (deve ser 1, dentro da precisão Decimal): 1.000000000000000000000000000000000000000
-- Hash lógico determinístico (RUN 1 — SYSTEM_ONLY): `9a955e218e71e806ab4906fbf06b0111d635649658732d4f4a6048261d3dcf8c`
+- Hash lógico determinístico (RUN 1 — SYSTEM_ONLY): `f065d10503bd9ca6480fc920baf3e5519ef4ef55036e95766574b80dfb49082f`
 
 ## Override de demonstração (RUN 2 — WITH_OVERRIDE)
 

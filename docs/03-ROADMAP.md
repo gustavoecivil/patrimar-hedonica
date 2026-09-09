@@ -2,6 +2,28 @@
 
 ## Fase atual
 
+**FASE 2C — Execução real do schema v2 em PostgreSQL isolado.**
+Executada em 2026-09-09 (ver [[05-WORKLOG]] e
+[[13-POSTGRESQL-V2-RUNTIME-VALIDATION]]). O schema v2 (Fase 2) e o
+seed sintético (Fase 2B) foram, por fim, executados de verdade — não
+mais só validados por parser — contra um PostgreSQL 18 real, local e
+isolado (banco `patrimar_pricing_v2_test`, já pré-existente no
+ambiente, nenhuma instalação nova necessária). DDL aplicado sem erro;
+inventário real (schemas/tabelas/FKs/constraints/índices) confirmado
+via `information_schema`/`pg_catalog`, não só pelo parser Python;
+seed aplicado (391 `INSERT`s); VGV validado por SQL puro; view
+`pricing.v_unit_price_current` validada; rastreabilidade completa de
+uma unidade sintética reconstruída via SQL; 7 tentativas de inserção
+inválida corretamente rejeitadas pelo banco; histórico preservado
+entre duas runs; determinismo confirmado de ponta a ponta (hash
+lógico recalculado a partir do banco idêntico ao hash do motor
+Python), inclusive após recriar o ambiente do zero duas vezes. Dois
+defeitos reais (só detectáveis em execução real) foram encontrados e
+corrigidos no código público/sintético — ver
+[[13-POSTGRESQL-V2-RUNTIME-VALIDATION]] para o detalhe. Nenhum dado
+privado, `database/schema.sql` (legado), Netlify ou frontend foi
+tocado; o banco de teste permanece ativo para a próxima fase.
+
 **FASE 2B — Seed sintético e prova end-to-end do Unit Price
 Allocation Engine.**
 Executada em 2026-09-09 (ver [[05-WORKLOG]]). Provado que o schema v2
@@ -105,10 +127,10 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    caminho versionado. **Status:** recepção (Fase 1A/1A.1), auditoria
    estrutural (Fase 1B), engenharia reversa da lógica de precificação
    (Fase 1C), gap analysis/modelo canônico preliminar (Fase 1D),
-   desenho do schema PostgreSQL v2 (Fase 2) e prova end-to-end com
-   dados sintéticos (Fase 2B) concluídos. Falta a Fase 2C (execução
-   real do schema em PostgreSQL local ou isolado, ainda não feita —
-   toda validação até agora foi estrutural) e a validação das
+   desenho do schema PostgreSQL v2 (Fase 2), prova end-to-end com
+   dados sintéticos (Fase 2B) e execução real em PostgreSQL isolado
+   (Fase 2C) concluídos. Falta a Fase 3 (ingestão controlada das
+   planilhas reais para staging, ainda não feita) e a validação das
    perguntas pendentes registradas privadamente para quem forneceu a
    planilha original — duas delas bloqueavam decisão de schema e
    foram resolvidas modelando para a incerteza (ver
@@ -151,8 +173,9 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
     unidades — reconstruído com evidência na Fase 1C, schema físico
     completo desde a Fase 2 — `database/v2/003_pricing.sql`, provado
     de ponta a ponta com algoritmo de referência 100% sintético na
-    Fase 2B — ver [[12-REFERENCE-ALLOCATION-ENGINE]]). Falta ainda
-    executar isso contra um PostgreSQL real (Fase 2C) e, no futuro,
+    Fase 2B, e executado com sucesso contra um PostgreSQL real e
+    isolado na Fase 2C — ver [[12-REFERENCE-ALLOCATION-ENGINE]] e
+    [[13-POSTGRESQL-V2-RUNTIME-VALIDATION]]). Falta, no futuro,
     formalizar um serviço/pipeline com a metodologia real da Patrimar
     (dependente das perguntas ainda pendentes em
     `data/restricted/audit/questions-for-rodolfo.md`).

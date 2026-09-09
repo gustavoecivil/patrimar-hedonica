@@ -6,6 +6,82 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 2C: Execução real do schema v2 em PostgreSQL isolado (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** executar de fato (não só validar por parser) o schema v2
+e o seed sintético contra um PostgreSQL real e isolado. Nenhum dado
+privado, banco de produção, Netlify DB, frontend ou modelo OLS
+tocado. Ver [[04-DECISIONS]] D9 e
+[[13-POSTGRESQL-V2-RUNTIME-VALIDATION]].
+
+**Ambiente:** PostgreSQL 18.4 já instalado no ambiente local (via
+winget, pré-existente — nenhuma instalação nova necessária). Banco de
+teste isolado `patrimar_pricing_v2_test`, role dedicada com senha
+gerada aleatoriamente, credenciais só em `.env.pricing_v2_test`
+(local, ignorado pelo Git). Nenhuma configuração global do servidor
+alterada — `pg_hba.conf` pré-existente já restringe autenticação a
+loopback.
+
+**Resultado agregado:**
+
+| Item | Resultado |
+|---|---|
+| DDL aplicado (7 arquivos, fail-fast) | Sem erro, 1ª tentativa |
+| Inventário real (catálogo, não parser) | 4 schemas, 21 tabelas (4/12/2/3), 1 view, 34 FKs, 13 `UNIQUE`, 36 `CHECK`, 59 índices — tudo conferindo com a Fase 2 |
+| Seed aplicado (transação única) | 391 `INSERT`s, sem erro |
+| Contagens reais pós-seed | 1 development, 2 towers, 4 typologies, 40 units, 1 scenario, 2 runs, 80 unit_price_results, 240 unit_adjustments, 1 unit_override — todas conferindo |
+| VGV (SQL puro) | alvo R$ 10.000.000,00 = sistemático R$ 10.000.000,00 (diferença 0,00) nos dois runs |
+| Override (SQL puro) | sistemático R$ 10.000.000,00 + impacto R$ 50.000,00 = final R$ 10.050.000,00 |
+| View `pricing.v_unit_price_current` | 40 linhas; após correção, reflete o override em exatamente 1 unidade |
+| Rastreabilidade | reconstruída via SQL para 1 unidade sintética (torre→unidade→run→cenário→parâmetros→calibrações→ajustes→resultado→override→validação) |
+| Testes de constraint reais | 7/7 inserções inválidas corretamente rejeitadas (FK, 2×`CHECK`, 2×`UNIQUE`, FK composta, índice único parcial) |
+| Histórico | confirmado preservado entre as 2 runs (preço sistemático idêntico nas duas; override nunca sobrescreve) |
+| Determinismo ponta a ponta | hash recalculado do banco = hash esperado, após 2 recriações completas do ambiente |
+
+**Dois defeitos reais encontrados e corrigidos** (só detectáveis
+executando contra PostgreSQL de fato):
+1. Empate de `completed_at` entre as 2 runs do seed (`now()` na mesma
+   transação) deixava a escolha de "run mais recente" da view não
+   determinística — corrigido com timestamps literais/escalonados no
+   seed + desempate defensivo adicional na view
+   (`database/v2/007_views.sql`).
+2. Hash lógico calculado com precisão Decimal quase ilimitada não
+   reproduzia a partir do banco, porque `participation_share
+   NUMERIC(9,6)` arredonda para 6 casas — o dinheiro nunca foi
+   afetado, só o hash de verificação. Corrigido alinhando a
+   quantização do hash à precisão real da coluna
+   (`scripts/reference_allocation_engine.py`).
+
+**Ferramentas criadas:** `scripts/verify_postgres_v2.py` (conecta via
+`psql`, sem `psycopg2`; credenciais só por variável de ambiente,
+nunca no código); `scripts/db_v2_create_test.ps1`,
+`db_v2_apply.ps1`, `db_v2_verify.ps1`, `db_v2_drop_test.ps1`
+(wrappers PowerShell; os três que alteram dados recusam operar se o
+nome do banco não contiver `_test` — testado explicitamente).
+
+**Documentação pública criada/atualizada:**
+[[13-POSTGRESQL-V2-RUNTIME-VALIDATION]] (novo); [[04-DECISIONS]] (D9,
+nova); [[03-ROADMAP]] (referências sanitizadas).
+
+**Verificação de segurança:** nenhuma senha versionada; nenhum
+`.env` rastreado; nenhum dado de `data/restricted/` usado; servidor
+PostgreSQL pré-existente não teve configuração global alterada.
+
+**Testes:** `npm run test:model` — **PASSOU**;
+`test_reference_allocation_engine.py` (21/21),
+`test_validate_db_v2.py`, `validate_db_v2.py --seed-file`,
+`verify_postgres_v2.py` — **todos passaram**. `database/schema.sql`,
+`index.html`, `netlify/functions/hedonic-data.mts` e as migrations
+Netlify existentes confirmados sem alteração.
+
+**Estado final:** o banco `patrimar_pricing_v2_test` **permanece
+ativo** localmente para a próxima fase — não foi removido.
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 2B: Seed sintético e prova end-to-end do Unit Price Allocation Engine (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

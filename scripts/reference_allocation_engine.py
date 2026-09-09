@@ -377,7 +377,20 @@ def canonical_json(obj) -> str:
 
 def logical_hash(run_result: dict) -> str:
     """SHA-256 de um payload canonico e determinístico: participação,
-    preços e fatores por unidade + total. Nunca inclui timestamps."""
+    preços e fatores por unidade + total. Nunca inclui timestamps.
+
+    A quantização de cada campo aqui usa DELIBERADAMENTE a mesma escala
+    da coluna correspondente em pricing.unit_price_results
+    (database/v2/003_pricing.sql) — weighted_area_m2 NUMERIC(12,4),
+    combined_weight_factor NUMERIC(12,6), participation_share
+    NUMERIC(9,6). Isso foi comprovado necessário na Fase 2C: calculado
+    com a precisão interna quase ilimitada do Decimal em memória, o
+    hash não reproduzia depois de ir e voltar de um PostgreSQL real,
+    porque a coluna participation_share (6 casas) arredonda um valor
+    que em memória tem dezenas de casas decimais. O dinheiro em si
+    (system_calculated_price) nunca foi afetado — só este hash, que
+    deve refletir o que de fato é persistido, não a precisão interna
+    do cálculo."""
     payload = {
         "algorithm": run_result["algorithm"],
         "target_vgv": run_result["target_vgv"],
@@ -388,7 +401,7 @@ def logical_hash(run_result: dict) -> str:
                 "unit_code": m["unit_code"],
                 "weighted_area_m2": m["weighted_area_m2"].quantize(Decimal("0.0001")),
                 "combined_weight_factor": m["combined_weight_factor"].quantize(Decimal("0.000001")),
-                "participation_share": m["participation_share"].quantize(Decimal("0.00000001")),
+                "participation_share": m["participation_share"].quantize(Decimal("0.000001")),
                 "system_calculated_price": m["system_calculated_price"],
                 "system_calculated_price_per_m2": m["system_calculated_price_per_m2"],
             }

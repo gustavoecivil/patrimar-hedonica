@@ -21,6 +21,7 @@ import argparse
 import json
 import sys
 import uuid
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -29,6 +30,7 @@ import reference_allocation_engine as engine  # noqa: E402
 
 SEED_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL,
                              "patrimar-hedonica/database/v2/seeds/001_demo_allocation")
+RUN_TIMESTAMP_BASE = "2026-09-09T18:00:00+00:00"  # literal, determinístico — ver nota em pricing.runs abaixo
 
 
 def uid(*parts: str) -> str:
@@ -171,15 +173,24 @@ class SeedBuilder:
         self.emit("")
 
         run_ids = {}
-        for run_key, run_cfg in s["runs"].items():
+        # Timestamps literais e deterministicos (nunca now()): duas runs
+        # aplicadas na mesma transacao com now() teriam o MESMO
+        # completed_at, o que a Fase 2C provou (executando de fato contra
+        # PostgreSQL) tornar a escolha de "run mais recente" da view
+        # nao deterministica. Cada run subsequente completa 1 minuto
+        # depois da anterior, na ordem em que aparecem na fixture.
+        base_ts = datetime.fromisoformat(RUN_TIMESTAMP_BASE)
+        for i, (run_key, run_cfg) in enumerate(s["runs"].items()):
             rid = uid("pricing.runs", scenario_id, run_cfg["code"])
             run_ids[run_key] = rid
+            started_at = (base_ts + timedelta(minutes=i)).isoformat()
+            completed_at = (base_ts + timedelta(minutes=i, seconds=30)).isoformat()
             self.insert("pricing.runs",
                          ["id", "scenario_id", "parameter_set_id", "code", "status", "engine_version",
                           "started_at", "completed_at"],
                          [sql_str(rid), sql_str(scenario_id), sql_str(parameter_set_id),
                           sql_str(run_cfg["code"]), sql_str("COMPLETED"), sql_str("REFERENCE_ALLOCATION_V1"),
-                          "now()", "now()"])
+                          sql_str(started_at), sql_str(completed_at)])
             for csid in calibration_set_ids.values():
                 self.insert("pricing.run_calibration_sets", ["run_id", "calibration_set_id"],
                              [sql_str(rid), sql_str(csid)])
@@ -230,7 +241,7 @@ class SeedBuilder:
                      "combined_weight_factor", "system_calculated_price", "system_calculated_price_per_m2"],
                     [sql_str(uid("pricing.unit_price_results", rid, unit_id)), sql_str(rid), sql_str(unit_id),
                      sql_num(m["weighted_area_m2"].quantize(Decimal("0.0001"))),
-                     sql_num(m["participation_share"].quantize(Decimal("0.00000001"))),
+                     sql_num(m["participation_share"].quantize(Decimal("0.000001"))),  # 6 casas: NUMERIC(9,6)
                      sql_num(m["combined_weight_factor"].quantize(Decimal("0.000001"))),
                      sql_num(m["system_calculated_price"]), sql_num(m["system_calculated_price_per_m2"])],
                 )

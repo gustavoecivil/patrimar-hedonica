@@ -28,11 +28,19 @@ latest_run_per_scenario AS (
   -- DISTINCT ON exige o ORDER BY correspondente na MESMA consulta (uma
   -- CTE separada só com ORDER BY não garante a ordem quando lida de
   -- outra consulta) — por isso está tudo num único SELECT aqui.
+  --
+  -- Desempate por r.id além de completed_at: comprovado necessário na
+  -- Fase 2C, executando de fato contra PostgreSQL — duas runs
+  -- concluídas no mesmo instante (mesmo valor de completed_at, ex.:
+  -- seed que usa now() dentro de uma única transação) deixavam a
+  -- escolha da "run mais recente" não determinística sem essa segunda
+  -- chave. completed_at continua sendo o critério principal; r.id só
+  -- decide em caso de empate exato.
   SELECT DISTINCT ON (r.scenario_id) r.id AS run_id, r.scenario_id
   FROM pricing.runs r
   JOIN active_scenario s ON s.scenario_id = r.scenario_id
   WHERE r.status = 'COMPLETED'
-  ORDER BY r.scenario_id, r.completed_at DESC
+  ORDER BY r.scenario_id, r.completed_at DESC, r.id DESC
 ),
 latest_override AS (
   SELECT DISTINCT ON (run_id, unit_id) run_id, unit_id, final_price, decided_at
