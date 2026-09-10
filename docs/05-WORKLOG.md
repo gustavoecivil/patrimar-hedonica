@@ -6,6 +6,107 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-10 — Fase 3C: Reprodução independente da lógica de precificação (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** reproduzir, fora do Excel, os preços já importados (Fase
+3B) a partir das unidades/parâmetros/calibrações reais já promovidos
+— sem calcular nada por hipótese, sem misturar dado importado com
+resultado calculado, e sem nunca deixar o motor de cálculo acessar o
+preço de referência antes de terminar. Ver [[04-DECISIONS]] D11/D12 e
+[[16-INDEPENDENT-PRICING-REPRODUCTION]].
+
+**Arquitetura:** motor genérico público
+(`scripts/pricing_reproduction_engine.py`, catálogo pequeno de
+operações Decimal — soma, soma ponderada, busca por chave derivada,
+combinação linear, etc., sem nenhuma fórmula/constante/nome real) +
+ruleset privado (`data/restricted/pricing_rules/`, nunca versionado,
+com a metodologia real reconstruída na Fase 1C) + runner que conecta
+os dois ao schema real (`scripts/run_pricing_reproduction.py`).
+
+**Extensão de schema aditiva** (`database/v2/010_reproduction.sql`,
+reconfirmada compatível com o cenário sintético já existente):
+`pricing.runs.run_type` ganha `REPRODUCTION_VALIDATION_RUN`;
+`audit.reproduction_runs` (mesmo padrão de estado de
+`raw.ingest_batches`/`audit.promotion_runs`, identificado por
+`development_id`+`ruleset_version`); `pricing.reproduction_comparisons`
+(separa `source_reference_price`/`reproduced_price`/`delta` sem nunca
+sobrescrever o resultado importado).
+
+**Resultado agregado (números apenas, sem conteúdo):**
+
+| Item | Resultado |
+|---|---|
+| Classificação final | `PARTIAL_REPRODUCTION` |
+| Unidades total / com preço reproduzido / bloqueadas | 884 / 0 / 884 |
+| Regra reproduzida de ponta a ponta com dado real | 1 (busca por calibração — 880/884 unidades; 4 bloqueadas por ausência real de fator na fonte, não por bug) |
+| Regra central bloqueando o preço final | matriz de calibração adicional nunca capturada nas fases anteriores (lacuna de pipeline, não de lógica) — confiança da fórmula em si: HIGH |
+| Overrides inventariados (não validados — cálculo-base bloqueado) | 188/884 unidades com ajuste não-zero |
+| Anomalia de fórmula conhecida (Fase 1C) | testada como 2 variantes separadas — resultado idêntico neste conjunto de dados, nunca corrigida silenciosamente |
+| Isolamento do preço de referência durante o cálculo | confirmado estruturalmente (teste público) |
+| Determinismo | confirmado (hash lógico idêntico entre reexecuções) |
+| Idempotência | confirmada contra PostgreSQL real (`ALREADY_REPRODUCED`, 0 linhas novas) |
+
+**Achado real e processo de convergência controlada** (documentado
+integralmente em `data/restricted/audit/reproduction-change-log.md`,
+issue/evidência/mudança/métrica antes-depois, nunca "ajuste para
+bater"): uma tentativa de usar 2 componentes de área ainda não
+promovidos (disponíveis só em `raw.cells`, nunca em `core.units`)
+produziu valores implausíveis quando testada contra o dado real (3
+tentativas, 3 `ruleset_version` distintas, todas preservadas no banco
+como histórico) — a decisão final foi retratar essa derivação
+inteiramente, nunca inventar um filtro para forçar um resultado
+plausível.
+
+**Ferramentas criadas:** `scripts/pricing_reproduction_engine.py`
+(motor genérico); `scripts/run_pricing_reproduction.py` (runner
+contra o schema real); `scripts/test_pricing_reproduction_engine.py`
+(12 verificações, 100% sintético — DAG, ciclo, dependência ausente,
+`Decimal`, regra dormente, bloqueio transitivo, isolamento do preço
+de referência, determinismo).
+
+**Artefatos privados criados** (todos em `data/restricted/`, nunca
+versionados): `pricing_rules/reproduction_rules_v1.json`;
+`audit/reproduction-run-summary.md`, `reproduction-results.csv`,
+`reproduction-differences.csv`, `reproduction-rule-trace.csv`,
+`reproduction-metrics.csv`, `reproduction-change-log.md`,
+`questions-for-rodolfo-shortlist-3c.md`;
+`backups/private_dev_POST_3C_REPRODUCTION_*.dump`.
+
+**Documentação pública criada/atualizada:**
+[[16-INDEPENDENT-PRICING-REPRODUCTION]] (novo); [[04-DECISIONS]] (D12,
+nova); [[03-ROADMAP]], [[07-DATA-DICTIONARY]] (referências
+sanitizadas).
+
+**Verificação de segurança:** nenhuma fórmula, constante ou valor
+real em código público; nenhuma senha/dump/ruleset versionado;
+`data/restricted/` confirmado não rastreado; busca textual nos
+artefatos novos contra nomes/hashes privados conhecidos — nenhuma
+ocorrência.
+
+**Testes:** `scripts/test_pricing_reproduction_engine.py` (12/12) —
+**PASSOU**; `test_promote_staging_to_core.py` (12/12, reconfirmado),
+`test_ingest_xlsx_postgres.py` (19/19, reconfirmado),
+`test_reference_allocation_engine.py` (21/21) — **PASSOU**;
+`validate_db_v2.py` (10 arquivos de DDL + seed) — **PASSOU**;
+`test_validate_db_v2.py` — **PASSOU**; `verify_postgres_v2.py` contra
+`patrimar_pricing_v2_test` — **PASSOU** (banco sintético confirmado
+intacto, hash lógico idêntico, mesmo após a extensão de schema 010
+aplicada nele também); `npm run test:model` — **PASSOU**.
+`database/schema.sql`, `index.html`,
+`netlify/functions/hedonic-data.mts` e as migrations Netlify
+existentes confirmados sem alteração.
+
+**Estado final:** `patrimar_pricing_v2_private_dev` agora tem 3
+execuções de reprodução registradas (histórico de convergência
+preservado), a oficial marcada `COMPLETED` com 0 preços reproduzidos
+e 884 comparações `BLOCKED` documentadas por causa.
+`patrimar_pricing_v2_test` permanece intacto.
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 3B: Mapeamento controlado de staging para core/pricing (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

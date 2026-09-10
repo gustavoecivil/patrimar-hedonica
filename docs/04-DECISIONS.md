@@ -219,3 +219,33 @@ futura que exiba `pricing.unit_price_results` pode omitir ou ignorar
 `result_origin`. Nenhum motor real de precificação (Fase 3C ou
 posterior) deve gravar resultados com `result_origin` diferente de
 `SYSTEM_CALCULATED`. Ver [[15-STAGING-TO-CANONICAL-PROMOTION]].
+
+### D12 — A lógica de precificação real é configuração privada; o código público é infraestrutura genérica
+
+**Data:** 2026-09-10
+**Decisão:** A partir da Fase 3C, todo motor que opera sobre a
+metodologia real reconstruída (Fase 1C) é dividido em duas partes
+com regras de versionamento diferentes: (1) um **engine genérico e
+público** (`scripts/pricing_reproduction_engine.py`), que só conhece
+um catálogo pequeno de operações abstratas (soma, soma ponderada,
+busca por chave derivada, combinação linear, etc.) e não contém
+nenhuma fórmula, constante ou nome real; (2) um **ruleset privado**
+(`data/restricted/pricing_rules/`, nunca versionado), que declara
+quais operações se aplicam a quais campos, com quais parâmetros
+estruturais evidenciados nas Fases 1B/1C. Tabelas de calibração e
+parâmetros numéricos reais nunca ficam no ruleset — são lidos ao vivo
+do banco privado.
+**Motivo:** a Fase 3C precisa executar de fato a lógica real para
+comparar contra os preços já importados (Fase 3B), mas a lógica em si
+continua sendo propriedade da Patrimar/Rodolfo (mesmo fundamento de
+D4/D6/D8) — reproduzir a metodologia não significa publicá-la.
+Separar "como calcular genericamente" (público, testável com dados
+fictícios) de "o que calcular de verdade" (privado) permite que o
+código do motor seja auditável e versionado sem nunca expor a
+fórmula proprietária.
+**Como aplicar:** qualquer novo motor que opere sobre a metodologia
+real (Fase 3D em diante) deve seguir o mesmo padrão — catálogo de
+operações genéricas em código público, parâmetros/tabelas/constantes
+reais exclusivamente em `data/restricted/`. Nenhum commit público
+pode conter uma fórmula, constante ou nome de campo real da fonte,
+mesmo dentro de um comentário ou docstring.

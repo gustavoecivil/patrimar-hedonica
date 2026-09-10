@@ -2,6 +2,32 @@
 
 ## Fase atual
 
+**FASE 3C — Reprodução independente da lógica de precificação.**
+Executada em 2026-09-10 (ver [[05-WORKLOG]] e
+[[16-INDEPENDENT-PRICING-REPRODUCTION]]). Tentativa de reproduzir,
+fora do Excel, os preços já importados (Fase 3B) a partir das
+unidades/parâmetros/calibrações reais já promovidos — sem calcular
+nada por hipótese e sem nunca deixar o motor de cálculo acessar o
+preço de referência antes de terminar. Resultado:
+**`PARTIAL_REPRODUCTION`** — uma regra de calibração (busca por chave
+derivada) foi reproduzida de ponta a ponta com evidência de fórmula e
+dado real, mas o preço final de todas as unidades permanece bloqueado
+por duas lacunas de disponibilidade de dado, não de compreensão da
+metodologia: uma tabela de calibração adicional nunca foi capturada
+nas fases anteriores, e um componente de área não pôde ser confirmado
+com confiança suficiente (tentativa registrada e retratada — nunca um
+filtro inventado para "fazer funcionar"). Extensão mínima e aditiva ao
+schema v2 (`database/v2/010_reproduction.sql`) para distinguir
+formalmente resultado importado de resultado calculado
+(`REPRODUCTION_VALIDATION_RUN`, ver [[04-DECISIONS]] D11/D12) — sem
+quebrar nenhum dado sintético já existente, reconfirmado. Nenhum
+preço foi promovido a produção/recomendação; `REFERENCE_ALLOCATION_V1`
+não foi usado sobre dado real. Teste público sintético
+(`scripts/test_pricing_reproduction_engine.py`) prova a arquitetura
+genérica do motor — grafo, bloqueio transitivo, isolamento do preço de
+referência, determinismo — usando somente regras fictícias. Banco de
+teste sintético (Fase 2C) confirmado intacto ao final.
+
 **FASE 3B — Mapeamento controlado de staging para core/pricing.**
 Executada em 2026-09-09 (ver [[05-WORKLOG]] e
 [[15-STAGING-TO-CANONICAL-PROMOTION]]). Os candidatos de staging com
@@ -183,11 +209,12 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    desenho do schema PostgreSQL v2 (Fase 2), prova end-to-end com
    dados sintéticos (Fase 2B), execução real em PostgreSQL isolado
    (Fase 2C), ingestão controlada das duas planilhas reais para
-   RAW/STAGING (Fase 3A) e promoção controlada de staging para
-   core/pricing (Fase 3B) concluídos. Falta a Fase 3C (reprodução
-   independente da lógica de precificação — motor real, ainda não
-   feita) e a validação das perguntas pendentes registradas
-   privadamente para quem forneceu a planilha original — duas delas
+   RAW/STAGING (Fase 3A), promoção controlada de staging para
+   core/pricing (Fase 3B) e reprodução independente da lógica de
+   precificação (Fase 3C, resultado `PARTIAL_REPRODUCTION`) concluídos.
+   Falta a Fase 3D (fechamento das ambiguidades que bloquearam a
+   reprodução completa) e a validação das perguntas pendentes
+   registradas privadamente para quem forneceu a planilha original — duas delas
    bloqueavam decisão de schema e foram resolvidas modelando para a
    incerteza (ver [[11-DATABASE-V2-DESIGN]]); as demais continuam
    pendentes, ver `data/restricted/audit/questions-for-rodolfo.md`.
@@ -203,8 +230,11 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    reais num banco privado dedicado — ver [[14-PRIVATE-DATA-INGESTION]].
    A promoção de `staging` para `core`/`pricing` (Fase 3B) já foi
    feita para os candidatos `HIGH` — ver
-   [[15-STAGING-TO-CANONICAL-PROMOTION]]. Falta ainda um motor real de
-   precificação que grave resultados `SYSTEM_CALCULATED` (Fase 3C).
+   [[15-STAGING-TO-CANONICAL-PROMOTION]]. A Fase 3C tentou reproduzir
+   a lógica real de forma independente (`PARTIAL_REPRODUCTION` — ver
+   [[16-INDEPENDENT-PRICING-REPRODUCTION]]); nenhum resultado
+   `SYSTEM_CALCULATED` real foi produzido ainda, por lacunas de dado
+   documentadas, não de lógica.
 4. **PostgreSQL/PostGIS** — evoluir o schema atual (`database/schema.sql`)
    para suportar dados geoespaciais reais (hoje `developments` já tem
    `latitude`/`longitude` como `NUMERIC`, mas não há extensão PostGIS
@@ -239,11 +269,14 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
     reais já existem no schema (Fase 3B), mas todos marcados
     `result_origin='IMPORTED_REFERENCE'` — importados da fonte, nunca
     calculados pelo sistema (ver [[04-DECISIONS]] D11 e
-    [[15-STAGING-TO-CANONICAL-PROMOTION]]). Falta, no futuro,
-    formalizar um serviço/pipeline com a metodologia real da Patrimar
-    que produza resultados `SYSTEM_CALCULATED` (Fase 3C, dependente
-    das perguntas ainda pendentes em
-    `data/restricted/audit/questions-for-rodolfo.md`).
+    [[15-STAGING-TO-CANONICAL-PROMOTION]]). A Fase 3C tentou produzir
+    o primeiro resultado `SYSTEM_CALCULATED` real, de forma
+    independente — resultado `PARTIAL_REPRODUCTION` (ver
+    [[16-INDEPENDENT-PRICING-REPRODUCTION]] e [[04-DECISIONS]] D12):
+    uma regra foi reproduzida de ponta a ponta, mas o preço final
+    continua bloqueado por lacunas de dado (não de lógica),
+    diretamente dependentes das perguntas ainda pendentes em
+    `data/restricted/audit/questions-for-rodolfo-shortlist-3c.md`.
 11. **Simulador** — evoluir a "Calculadora" atual (client-side, sessão
     única) para um simulador robusto e auditável.
 12. **Painel** — evoluir as abas atuais de `index.html` para um painel

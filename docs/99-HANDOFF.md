@@ -14,7 +14,9 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
    (D7 dois motores; D8 referência sintética não é metodologia
    oficial; D9 testes de banco real isolados sem alterar servidor;
    D10 banco privado de ingestão separado do banco sintético; D11
-   resultado importado nunca confundido com resultado calculado).
+   resultado importado nunca confundido com resultado calculado; D12
+   lógica real é configuração privada, código público é infra
+   genérica).
 6. [[08-SPREADSHEET-AUDIT-METHOD]], [[09-PRICING-LOGIC-REVERSE-ENGINEERING]],
    [[10-PRICING-DOMAIN-MODEL]], [[11-DATABASE-V2-DESIGN]],
    [[12-REFERENCE-ALLOCATION-ENGINE]] — metodologia/modelo das fases
@@ -25,69 +27,63 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
    planilhas reais (Fase 3A).
 9. [[15-STAGING-TO-CANONICAL-PROMOTION]] — promoção controlada de
    staging para core/pricing (Fase 3B).
-10. Este documento (99-HANDOFF) — estado exato da última execução.
+10. [[16-INDEPENDENT-PRICING-REPRODUCTION]] — tentativa de reprodução
+    independente da lógica de precificação real (Fase 3C,
+    `PARTIAL_REPRODUCTION`).
+11. Este documento (99-HANDOFF) — estado exato da última execução.
 
-## Estado atual (2026-09-09, Fase 3B)
+## Estado atual (2026-09-10, Fase 3C)
 
 - **Branch de trabalho:** `rebuild/pricing-intelligence`, rastreando
   `origin/rebuild/pricing-intelligence`. `main` intocada em `7dd1d24`.
-- **As duas planilhas reais de Rodolfo agora têm entidades canônicas
-  reais em `core`/`pricing`**, no mesmo banco privado
-  `patrimar_pricing_v2_private_dev` (Fase 3A) — 2 desenvolvimentos, 5
-  torres, 2 tipologias, 884 unidades, 4 parâmetros, 29 entradas de
-  calibração, 884 resultados de preço. **Nenhum preço foi calculado
-  por este sistema** — todos os 884 resultados estão marcados
-  `result_origin='IMPORTED_REFERENCE'`/`run_type='IMPORTED_REFERENCE_RUN'`
-  (nunca `SYSTEM_CALCULATED`/`SYSTEM_RUN`) — ver [[04-DECISIONS]] D11.
-- **Extensão de schema aditiva** (`database/v2/009_promotion.sql`):
-  `audit.promotion_runs` (mesmo padrão de estado de
-  `raw.ingest_batches`, Fase 3A); lineage/idempotência em
-  `staging.*_candidates`; classificação de impacto em
-  `staging.mapping_review`; `run_type`/`result_origin` em
-  `pricing.runs`/`pricing.unit_price_results`; `classification` em
-  `core.unit_typologies`. **Compatível com todo dado sintético já
-  existente** (Fases 2B/2C) — reconfirmado por execução real após
-  aplicar a mesma extensão no banco de teste.
-- **Business keys nunca derivadas do nome do arquivo**: esquema
-  determinístico a partir do hash SHA-256 do workbook
-  (`DEV-<10 primeiros chars do sha, maiúsculo>`). `core.developments.name`
-  deixado `NULL` deliberadamente.
-- **4 achados reais durante a promoção, todos investigados contra
-  `raw.cells` (leitura, nunca escrita) e nenhum corrigido por
-  invenção**: (1) 2 parâmetros vazios por bug de extração de célula
-  única (mesma classe do bug de `COALESCE` já visto na Fase 3A —
-  corrigido em `scripts/ingest_xlsx_postgres.py` para futuras
-  reingestões; os 2 valores já staged não foram retroativamente
-  corrigidos); (2) 2 parâmetros vazios por referência de célula
-  provavelmente incorreta no mapeamento privado (gap registrado, não
-  investigado a fundo); (3) 2 entradas de calibração sem fator por
-  ausência real de dado na fonte (preservado como anomalia); (4) um
-  bug real de infraestrutura em `run_query_csv` (descartava
-  silenciosamente linhas de resultado com uma única coluna `NULL`),
-  encontrado pelo teste sintético público e corrigido — não afetou
-  nenhum dado já promovido. Detalhe completo em
-  `data/restricted/audit/core-pricing-promotion-report.md` e no
-  worklog desta fase.
-- **Reconciliação privada**: soma dos preços importados por
-  desenvolvimento fecha com o VGV final já presente na fonte (lido
-  só por leitura, nunca escrito) com diferença menor que R$ 0,20 em
-  bases de R$ 195M/262M — explicável por arredondamento.
-- **Idempotência confirmada contra PostgreSQL real**: reexecutar a
-  promoção completa produz `ALREADY_PROMOTED`, zero linhas novas.
+- **Primeira tentativa real de calcular preço de forma independente
+  da planilha.** Resultado: **`PARTIAL_REPRODUCTION`** — nenhuma das
+  884 unidades reais chegou a um preço final reproduzido
+  (`result_origin='SYSTEM_CALCULATED'`), mas uma regra de calibração
+  (busca por pavimento, com derivação de chave evidenciada por
+  fórmula e tabela real já promovida na Fase 3B) foi reproduzida de
+  ponta a ponta para 880/884 unidades. Ver [[04-DECISIONS]] D11/D12.
+- **Bloqueio central identificado com precisão**: uma segunda tabela
+  de calibração (peso de posição) nunca foi capturada como candidato
+  de staging nas fases anteriores (Fase 3A só mapeou a dimensão de
+  pavimento) — isso bloqueia toda a cadeia até o preço final,
+  **independentemente** de qualquer outro problema. Não é uma falha
+  de compreensão da lógica (a fórmula em si tem confiança `HIGH`,
+  evidenciada desde a Fase 1C) — é uma lacuna de dado disponível.
+- **Achado real e retratado durante a fase**: uma tentativa de usar
+  2 componentes de área ainda não promovidos (disponíveis só em
+  `raw.cells`) produziu valores numericamente implausíveis quando
+  testada contra o dado real — 3 tentativas sucessivas, cada uma mais
+  conservadora que a anterior, todas preservadas no banco como
+  histórico de convergência (nunca um filtro inventado para "fazer
+  bater"). Detalhe completo em
+  `data/restricted/audit/reproduction-change-log.md`.
+- **Isolamento do preço de referência confirmado estruturalmente**: o
+  motor de cálculo nunca teve, em nenhum momento, acesso a
+  `pricing.unit_price_results` durante o cálculo — só depois, numa
+  fase de validação separada.
+- **Determinismo e idempotência confirmados contra PostgreSQL real**:
+  mesmo input produz mesmo hash lógico; reexecutar a mesma
+  `(development, ruleset_version)` produz `ALREADY_REPRODUCED`, zero
+  linhas novas.
+- **Extensão de schema aditiva** (`database/v2/010_reproduction.sql`):
+  `pricing.runs.run_type` ganha `REPRODUCTION_VALIDATION_RUN`;
+  `audit.reproduction_runs`; `pricing.reproduction_comparisons`.
+  **Compatível com todo dado sintético já existente** (Fases 2B/2C) —
+  reconfirmado por execução real após aplicar a mesma extensão no
+  banco de teste.
+- **Arquitetura engine/ruleset estabelecida como padrão** (D12): todo
+  motor futuro que opere sobre a metodologia real deve seguir o mesmo
+  padrão — catálogo de operações genéricas em código público,
+  parâmetros/constantes/tabelas reais exclusivamente em
+  `data/restricted/pricing_rules/`.
 - **Teste público sintético criado**:
-  `scripts/test_promote_staging_to_core.py` — 12 verificações,
-  incluindo detecção de duplicidade real e rollback com marcação
-  `FAILED`, usando somente dados fabricados em `raw`/`staging`
-  (nunca um workbook real).
-- **Dois checkpoints privados** (`pg_dump`, formato custom) em
-  `data/restricted/backups/` (nunca versionado): `PRE_3B` (antes de
-  qualquer escrita em `core`/`pricing`) e `POST_3B_PRE_REPRODUCTION`
-  (depois da promoção bem-sucedida).
+  `scripts/test_pricing_reproduction_engine.py` — 12 verificações
+  (DAG, ciclo, dependência ausente, `Decimal`, regra dormente,
+  bloqueio transitivo, isolamento do preço de referência,
+  determinismo), usando exclusivamente regras fictícias.
 - **Banco de teste sintético (`patrimar_pricing_v2_test`, Fase 2C)
-  confirmado intacto** ao final desta fase — `verify_postgres_v2.py`
-  reexecutado com sucesso, hash lógico idêntico, mesmo depois de
-  aplicar a extensão de schema 009 nele também (aditiva, sem afetar
-  dado existente).
+  confirmado intacto** ao final desta fase.
 - `npm run test:model` re-executado: **PASSOU**, mesmo resultado das
   fases anteriores.
 
@@ -104,40 +100,45 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
 9. `866e876` — `feat: prove unit allocation engine with synthetic scenario` (Fase 2B).
 10. `c72fe0c` — `test: validate pricing v2 on real PostgreSQL` (Fase 2C).
 11. `55139eb` — `feat: add controlled private data ingestion pipeline` (Fase 3A).
-12. (Fase 3B) commit — `feat: promote private staging into canonical
-    pricing model` (`database/v2/009_promotion.sql`,
-    `scripts/promote_staging_to_core.py`,
-    `scripts/test_promote_staging_to_core.py`,
-    `scripts/ingest_xlsx_postgres.py` corrigido (2 bugs),
-    `scripts/db_v2_apply.ps1` atualizado,
-    `docs/15-STAGING-TO-CANONICAL-PROMOTION.md`, `docs/03-ROADMAP.md`,
-    `docs/04-DECISIONS.md`, `docs/05-WORKLOG.md`,
-    `docs/07-DATA-DICTIONARY.md`, `docs/11-DATABASE-V2-DESIGN.md`,
+12. `72d798c` — `feat: promote private staging into canonical pricing model` (Fase 3B).
+13. (Fase 3C) commit — `feat: add independent pricing reproduction
+    engine` (`database/v2/010_reproduction.sql`,
+    `scripts/pricing_reproduction_engine.py`,
+    `scripts/run_pricing_reproduction.py`,
+    `scripts/test_pricing_reproduction_engine.py`,
+    `docs/16-INDEPENDENT-PRICING-REPRODUCTION.md`,
+    `docs/03-ROADMAP.md`, `docs/04-DECISIONS.md`,
+    `docs/05-WORKLOG.md`, `docs/07-DATA-DICTIONARY.md`,
     `docs/99-HANDOFF.md`, `database/v2/README.md` — tudo
-    público/genérico, nenhum dado privado, nenhuma credencial).
+    público/genérico, nenhuma fórmula/constante/valor privado,
+    nenhuma credencial).
 
 Nenhum desses commits contém dado privado ou segredo. `data/restricted/`
 nunca foi (e não pode ser) adicionada a nenhum commit. Nenhum
 `.env.*` ou `.dump` nunca foi (e não pode ser) adicionado a nenhum
 commit.
 
-## Arquivos criados/alterados nesta fase (Fase 3B)
+## Arquivos criados/alterados nesta fase (Fase 3C)
 
 ```
-docs/15-STAGING-TO-CANONICAL-PROMOTION.md              (novo)
+docs/16-INDEPENDENT-PRICING-REPRODUCTION.md            (novo)
 docs/03-ROADMAP.md, 04-DECISIONS.md, 05-WORKLOG.md,
-  07-DATA-DICTIONARY.md, 11-DATABASE-V2-DESIGN.md,
-  99-HANDOFF.md                                         (atualizados)
-database/v2/009_promotion.sql                          (novo)
+  07-DATA-DICTIONARY.md, 99-HANDOFF.md                  (atualizados)
+database/v2/010_reproduction.sql                       (novo)
 database/v2/README.md                                   (atualizado)
-scripts/promote_staging_to_core.py                     (novo)
-scripts/test_promote_staging_to_core.py                (novo — teste público sintético)
-scripts/ingest_xlsx_postgres.py                         (corrigido — 2 bugs reais, ver worklog)
-scripts/db_v2_apply.ps1                                 (atualizado — inclui 009_promotion.sql)
-data/restricted/audit/core-pricing-promotion-report.md  (LOCAL, NAO versionado)
-data/restricted/audit/core-pricing-profile.csv          (LOCAL, NAO versionado)
-data/restricted/backups/private_dev_PRE_3B_*.dump       (LOCAL, NAO versionado)
-data/restricted/backups/private_dev_POST_3B_PRE_REPRODUCTION_*.dump (LOCAL, NAO versionado)
+scripts/pricing_reproduction_engine.py                 (novo — motor generico publico)
+scripts/run_pricing_reproduction.py                    (novo — runner contra o schema real)
+scripts/test_pricing_reproduction_engine.py            (novo — teste publico sintetico)
+scripts/db_v2_apply.ps1                                 (atualizado — inclui 010_reproduction.sql)
+data/restricted/pricing_rules/reproduction_rules_v1.json (LOCAL, NAO versionado)
+data/restricted/audit/reproduction-run-summary.md       (LOCAL, NAO versionado)
+data/restricted/audit/reproduction-results.csv          (LOCAL, NAO versionado)
+data/restricted/audit/reproduction-differences.csv      (LOCAL, NAO versionado)
+data/restricted/audit/reproduction-rule-trace.csv       (LOCAL, NAO versionado)
+data/restricted/audit/reproduction-metrics.csv          (LOCAL, NAO versionado)
+data/restricted/audit/reproduction-change-log.md        (LOCAL, NAO versionado)
+data/restricted/audit/questions-for-rodolfo-shortlist-3c.md (LOCAL, NAO versionado)
+data/restricted/backups/private_dev_POST_3C_REPRODUCTION_*.dump (LOCAL, NAO versionado)
 ```
 
 Nenhum arquivo pré-existente do laboratório (`index.html`, `MODEL.md`,
@@ -160,42 +161,46 @@ fase até agora — confirmado via `git log` em cada um deles nesta fase.
    metodologia real** — ver [[04-DECISIONS]] D8. Ainda não usado
    sobre dado real.
 5. **Nenhum resultado de preço real ainda é `SYSTEM_CALCULATED`** —
-   os 884 resultados promovidos na Fase 3B são todos
-   `IMPORTED_REFERENCE`. Qualquer código futuro que consulte
-   `pricing.unit_price_results` sem filtrar/exibir `result_origin`
-   corre o risco de apresentar um número importado como se fosse um
-   cálculo do sistema — ver [[04-DECISIONS]] D11.
-6. **4 achados reais da Fase 3B ainda pendentes de resolução** (não
-   bloqueiam nada, mas não foram corrigidos): 2 parâmetros
-   `CALIBRATION_LOOKUP_COLUMN_INDEX` prontos para repromoção (bug de
-   extração já corrigido, valor staged ainda não atualizado); 2
-   parâmetros `POSITION_ADJUSTMENT_MODE` com referência de célula
-   possivelmente incorreta no mapeamento privado (não investigado a
-   fundo); 2 entradas de calibração sem fator por ausência real na
-   fonte (não é um bug, é dado ausente). Ver
-   `data/restricted/audit/core-pricing-promotion-report.md`.
-7. **Dois bancos PostgreSQL locais no mesmo servidor pré-existente**
+   a Fase 3C tentou e ficou bloqueada. Qualquer código futuro que
+   consulte `pricing.unit_price_results` sem filtrar/exibir
+   `result_origin` corre o risco de apresentar um número importado
+   como se fosse um cálculo do sistema — ver [[04-DECISIONS]] D11.
+6. **O bloqueio central da Fase 3C é uma lacuna de PIPELINE, não de
+   lógica**: uma segunda tabela de calibração (peso de posição) nunca
+   foi capturada como candidato de staging na Fase 3A. Antes de
+   tentar desbloquear isso numa fase futura, revisar
+   `data/restricted/audit/questions-for-rodolfo-shortlist-3c.md`
+   (prioridade P1) — pode exigir resposta de Rodolfo sobre como essa
+   matriz é originalmente construída, não só uma correção técnica de
+   pipeline.
+7. **H/I (2 componentes de área) foram deliberadamente retratadas**
+   como `DERIVED_FOR_REPRODUCTION` nesta fase, após 3 tentativas — os
+   valores nas colunas correspondentes de `raw.cells`, para ambos os
+   desenvolvimentos, contêm uma fração de linhas com conteúdo
+   implausível como área. Não usar essas colunas em nenhuma fase
+   futura sem entender essa anomalia primeiro (ver
+   `reproduction-change-log.md` e P2 da shortlist).
+8. **3 execuções de reprodução (3 `ruleset_version` distintas)
+   coexistem no banco privado** como histórico de convergência —
+   nunca apagadas, nunca "limpe o histórico" sem necessidade
+   explícita; a versão oficial é a mais recente registrada em
+   `data/restricted/audit/reproduction-metrics.csv` (privado — o
+   hash específico nunca aparece em documentação pública).
+9. **Dois bancos PostgreSQL locais no mesmo servidor pré-existente**
    (`patrimar_pricing_v2_test` e `patrimar_pricing_v2_private_dev`) —
    nunca misturar dado real no banco `_test`, nem dado sintético de
    demonstração no banco `_private_dev` (ver D10). Ambos agora têm o
-   schema 001-009 aplicado.
-8. **13 itens em `staging.mapping_review`, agora classificados por
-   impacto** (`review_classification`) — 3 `BLOCKING_CORE`, 2
-   `BLOCKING_PRICING`, 4 `BUSINESS_CLARIFICATION`, 4 `NON_BLOCKING`.
-   Nenhum foi promovido; útil para priorizar qual pergunta levar a
-   Rodolfo primeiro.
-9. **`main` e `rebuild/pricing-intelligence` divergirão** até decisão
-   explícita de merge/substituição.
-10. **O Motor A (Market Pricing Engine) ainda não tem nenhuma fonte
+   schema 001-010 aplicado.
+10. **`main` e `rebuild/pricing-intelligence` divergirão** até decisão
+    explícita de merge/substituição.
+11. **O Motor A (Market Pricing Engine) ainda não tem nenhuma fonte
     de dado real** — fora de escopo desta fase também.
-11. **Perguntas ainda pendentes para quem forneceu a planilha** — ver
-    `data/restricted/audit/questions-for-rodolfo.md`.
-12. **A Fase 3C (reprodução independente da lógica de precificação
-    real — motor real que produza `SYSTEM_CALCULATED`) ainda não foi
-    iniciada.** Antes de iniciá-la, considerar levar as perguntas
-    pendentes de Rodolfo ao responsável do projeto — várias decisões
-    de cálculo dependem das respostas, e os 6 achados/gaps da Fase 3B
-    (item 6 acima) devem ser revisitados primeiro.
+12. **A Fase 3D (fechamento das ambiguidades que bloquearam a
+    reprodução) ainda não foi iniciada.** Ver
+    `data/restricted/audit/questions-for-rodolfo-shortlist-3c.md`
+    para a lista priorizada do que precisa de resposta de Rodolfo
+    antes de tentar desbloquear PR-007 (peso de posição) — o item que,
+    sozinho, já impede qualquer preço final de ser reproduzido.
 
 ## Comandos úteis já validados
 
@@ -203,45 +208,46 @@ fase até agora — confirmado via `git log` em cada um deles nesta fase.
 npm run test:model
 python scripts/test_reference_allocation_engine.py
 python scripts/test_validate_db_v2.py
+python scripts/test_pricing_reproduction_engine.py
 python scripts/validate_db_v2.py --sql-dir database/v2 \
   --file 001_schemas.sql --file 002_core.sql --file 003_pricing.sql \
   --file 004_audit.sql --file 005_market_foundation.sql \
   --file 006_indexes.sql --file 007_views.sql --file 008_ingestion.sql \
-  --file 009_promotion.sql \
+  --file 009_promotion.sql --file 010_reproduction.sql \
   --seed-file database/v2/seeds/001_demo_allocation.sql
 
 # contra o banco de teste SINTÉTICO (requer .env.pricing_v2_test local e psql no PATH/PSQL_BIN):
 powershell -File scripts/db_v2_create_test.ps1   # cria/recria banco+role de teste
-powershell -File scripts/db_v2_apply.ps1 -WithSeed  # aplica DDL (001-009) + seed, fail-fast
+powershell -File scripts/db_v2_apply.ps1 -WithSeed  # aplica DDL (001-010) + seed, fail-fast
 powershell -File scripts/db_v2_verify.ps1        # compara banco real x expected.json (inclui hash)
 powershell -File scripts/db_v2_drop_test.ps1     # remove o banco de teste (NÃO executar sem necessidade)
 
 # testes públicos sintéticos do pipeline (contra qualquer banco "_test"):
 python scripts/test_ingest_xlsx_postgres.py --env-file .env.pricing_v2_test
 python scripts/test_promote_staging_to_core.py --env-file .env.pricing_v2_test
+python scripts/test_pricing_reproduction_engine.py
 
-# ingestão/promoção real (NUNCA rodar contra o banco "_test" — só contra o banco privado dedicado):
-python scripts/ingest_xlsx_postgres.py ingest-raw --input <arquivo.xlsx> --dry-run
-python scripts/promote_staging_to_core.py --mode summary
-python scripts/promote_staging_to_core.py --mode dry-run --ingest-batch-id <id> --mapping <mapeamento.json privado>
-python scripts/promote_staging_to_core.py --mode apply --ingest-batch-id <id> --mapping <mapeamento.json privado>
+# reprodução real (NUNCA rodar contra o banco "_test" — só contra o banco privado dedicado):
+python scripts/run_pricing_reproduction.py --mode summary
+python scripts/run_pricing_reproduction.py --mode dry-run --ruleset <ruleset.json privado>
+python scripts/run_pricing_reproduction.py --mode apply --ruleset <ruleset.json privado>
 ```
 
 ## Próximo passo recomendado
 
-**Fase 3C — Reprodução independente da lógica de precificação real.**
-Com `core`/`pricing` já populados com as entidades reais (Fase 3B), o
-próximo passo natural é implementar, como código executável, a
-metodologia real reconstruída na Fase 1C (as 21 regras de negócio) —
-produzindo, pela primeira vez, resultados `result_origin=
-'SYSTEM_CALCULATED'` a partir dos parâmetros/calibrações já
-promovidos — e comparar esse cálculo independente contra os
-resultados `IMPORTED_REFERENCE` já persistidos, como validação. Antes
-de iniciar, revisar os 6 achados/gaps pendentes da Fase 3B (seção de
-riscos, item 6) e `data/restricted/audit/questions-for-rodolfo.md` —
-várias decisões de cálculo (ex.: o mecanismo alternativo de ajuste de
-posição, a origem da matriz de referência da aba Dispersão) dependem
-de respostas ainda não obtidas.
+**Fase 3D — Fechamento das ambiguidades e regras que bloquearam a
+reprodução completa.** A Fase 3C isolou com precisão o que falta:
+(1) a matriz de calibração de posição nunca foi capturada como
+candidato de staging — precisa de uma nova rodada de mapeamento
+(possivelmente Fase 3A revisitada) e/ou resposta de Rodolfo sobre
+como ela é construída; (2) os componentes de área "varanda"/
+"dependência" têm uma anomalia de conteúdo ainda não explicada. Antes
+de iniciar, revisar
+`data/restricted/audit/questions-for-rodolfo-shortlist-3c.md`
+(prioridade P1 e P2) — as duas lacunas centrais dependem de
+esclarecimento externo, não apenas de mais engenharia. Só depois
+disso a reprodução deve ser reexecutada visando `EXACT_REPRODUCTION`
+ou `NEAR_EXACT_WITH_EXPLAINED_ROUNDING`.
 
 ## Regra para quem continuar este trabalho
 

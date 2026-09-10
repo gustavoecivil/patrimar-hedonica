@@ -40,6 +40,14 @@
 > `promoted_entity_id`) — ver [[15-STAGING-TO-CANONICAL-PROMOTION]] e
 > [[04-DECISIONS]] D11 (nunca confundir `IMPORTED_REFERENCE` com
 > `SYSTEM_CALCULATED`).
+>
+> **Nota (Fase 3C):** uma tentativa de reprodução independente
+> (`pricing.runs.run_type='REPRODUCTION_VALIDATION_RUN'`,
+> `pricing.reproduction_comparisons`) já existe no schema e já foi
+> executada contra o banco privado — resultado `PARTIAL_REPRODUCTION`,
+> sem nenhum resultado `SYSTEM_CALCULATED` real produzido ainda (a
+> lógica real é configuração privada, nunca parte deste dicionário —
+> ver [[04-DECISIONS]] D12 e [[16-INDEPENDENT-PRICING-REPRODUCTION]]).
 
 Somente campos comprovadamente existentes no repositório em 2026-09-09.
 Três representações coexistem hoje: o CSV de seed, o schema relacional

@@ -31,6 +31,8 @@ para o mapeamento detalhado dos conceitos observados nas planilhas.
 008_ingestion.sql                  -- raw.* (fidelidade da fonte) + staging.* (candidatos normalizados) — Fase 3A
 009_promotion.sql                    -- audit.promotion_runs + colunas de lineage/idempotência/distinção
                                         -- SYSTEM_CALCULATED vs IMPORTED_REFERENCE — Fase 3B
+010_reproduction.sql                   -- audit.reproduction_runs + pricing.reproduction_comparisons +
+                                          REPRODUCTION_VALIDATION_RUN — Fase 3C
 ```
 
 **Por que algumas foreign keys são adicionadas via `ALTER TABLE` em
@@ -173,8 +175,12 @@ classificação de revisão em `staging.mapping_review`
 `pricing.unit_price_results.result_origin`, `IMPORTED_REFERENCE`
 adicionado a `pricing.vgv_targets.origin`, e classificação de
 tipologia em `core.unit_typologies.classification` — ver
-[[docs/15-STAGING-TO-CANONICAL-PROMOTION]]. Total agora: 6 schemas, 31
-tabelas físicas, 1 view.
+[[docs/15-STAGING-TO-CANONICAL-PROMOTION]]. **Fase 3C** adicionou 2
+tabelas novas (`audit.reproduction_runs`,
+`pricing.reproduction_comparisons`) e um terceiro valor
+(`REPRODUCTION_VALIDATION_RUN`) em `pricing.runs.run_type` — ver
+[[docs/16-INDEPENDENT-PRICING-REPRODUCTION]]. Total agora: 6 schemas,
+33 tabelas físicas, 1 view.
 
 ## Pendências e decisões adiadas
 
