@@ -249,3 +249,35 @@ operações genéricas em código público, parâmetros/tabelas/constantes
 reais exclusivamente em `data/restricted/`. Nenhum commit público
 pode conter uma fórmula, constante ou nome de campo real da fonte,
 mesmo dentro de um comentário ou docstring.
+
+### D13 — Fechamento de ambiguidade exige evidência classificada e prova estrutural antes de comparar contra o preço de referência
+
+**Data:** 2026-09-10
+**Decisão:** Toda ambiguidade que bloqueie a reprodução de preço só
+pode ser resolvida com evidência classificada como `DIRECT`,
+`STRUCTURAL` ou `INFERRED_STRONG` — nunca `INFERRED_WEAK` ou
+suposição. Além disso, qualquer hipótese precisa ser comprovada
+**usando somente a estrutura da própria fonte** (fórmula real,
+identidade aritmética, valor já calculado e armazenado pela própria
+fonte) **antes** de seu efeito ser medido contra o preço de
+referência já conhecido. Uma hipótese encontrada olhando o preço
+final para ajustar um valor é descartada como
+`CONTAMINATED_HYPOTHESIS`, mesmo que reduza o erro observado.
+**Motivo:** a Fase 3D encontrou e corrigiu, com esse método, um
+defeito real de software (não uma ambiguidade de negócio) e
+reconstruiu uma tabela de calibração inteira a partir de evidência de
+fórmula — sem esse rigor, seria tentador "ajustar até bater", o que
+produziria uma reprodução aparentemente perfeita mas sem
+sustentação real, exatamente o resultado que este projeto rejeita
+desde a Fase 3C (D8, D11: nunca confundir dado importado/ajustado com
+resultado genuinamente calculado).
+**Como aplicar:** qualquer fase futura que tente fechar uma
+ambiguidade de cálculo (Fase 3D em diante) deve documentar, para cada
+achado: a classificação da evidência, a prova estrutural que a
+sustenta (antes de qualquer comparação com o preço final), e o
+efeito medido depois. Reprodução matemática bem-sucedida
+(`MATHEMATICAL_REPRODUCTION_CONFIRMED`) nunca deve ser apresentada
+como equivalente a entender o motivo de negócio de uma regra
+(`BUSINESS_SEMANTICS_CONFIRMED`) — as duas são registradas
+separadamente, e a segunda pode continuar pendente mesmo quando a
+primeira já foi alcançada.

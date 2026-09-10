@@ -2,6 +2,34 @@
 
 ## Fase atual
 
+**FASE 3D — Fechamento forense das ambiguidades e regras.**
+Executada em 2026-09-10 (ver [[05-WORKLOG]] e
+[[17-AMBIGUITY-RESOLUTION-METHOD]]). Investigação forense das
+ambiguidades que bloquearam a Fase 3C, usando primeiro toda a
+evidência disponível nas fontes originais (fórmula real, identidades
+aritméticas, valores já calculados pela própria fonte), nunca
+ajustando um resultado para "bater" contra o preço de referência.
+**Resultado: `MATHEMATICAL_REPRODUCTION_CONFIRMED` —**
+`NEAR_EXACT_WITH_EXPLAINED_ROUNDING`, 884/884 unidades reproduzidas
+independentemente, dentro de 1 centavo do preço já existente na
+fonte, sem nenhum acesso ao preço de referência durante o cálculo.
+Um dos dois bloqueios centrais da Fase 3C era, na verdade, um
+**defeito de software** (uma consulta que não isolava corretamente
+partes distintas da mesma fonte) — corrigido no código público, sem
+alterar nenhum dado. O outro bloqueio (uma tabela de calibração nunca
+antes capturada) foi resolvido reconstruindo-a inteiramente a partir
+da fórmula real, com um mecanismo genérico reutilizável (nunca uma
+fórmula real hardcoded). `BUSINESS_SEMANTICS_CONFIRMED` permanece
+parcial — 2 perguntas objetivas, em português simples, preparadas
+para consulta futura a quem forneceu a planilha (nunca enviadas
+automaticamente). Motor genérico
+(`scripts/pricing_reproduction_engine.py`) ganhou 2 capacidades
+novas testadas com dados 100% fictícios (busca por chave composta;
+valor padrão explicitamente evidenciado para uma chave ausente
+específica). Todas as tentativas anteriores preservadas como
+histórico, nunca sobrescritas. Banco de teste sintético (Fase 2C)
+confirmado intacto ao final.
+
 **FASE 3C — Reprodução independente da lógica de precificação.**
 Executada em 2026-09-10 (ver [[05-WORKLOG]] e
 [[16-INDEPENDENT-PRICING-REPRODUCTION]]). Tentativa de reproduzir,
@@ -210,14 +238,17 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    dados sintéticos (Fase 2B), execução real em PostgreSQL isolado
    (Fase 2C), ingestão controlada das duas planilhas reais para
    RAW/STAGING (Fase 3A), promoção controlada de staging para
-   core/pricing (Fase 3B) e reprodução independente da lógica de
-   precificação (Fase 3C, resultado `PARTIAL_REPRODUCTION`) concluídos.
-   Falta a Fase 3D (fechamento das ambiguidades que bloquearam a
-   reprodução completa) e a validação das perguntas pendentes
-   registradas privadamente para quem forneceu a planilha original — duas delas
+   core/pricing (Fase 3B), reprodução independente da lógica de
+   precificação (Fase 3C) e fechamento forense das ambiguidades
+   (Fase 3D, resultado `NEAR_EXACT_WITH_EXPLAINED_ROUNDING`,
+   `MATHEMATICAL_REPRODUCTION_CONFIRMED`) concluídos. Da lista
+   original de perguntas para quem forneceu a planilha, duas
    bloqueavam decisão de schema e foram resolvidas modelando para a
-   incerteza (ver [[11-DATABASE-V2-DESIGN]]); as demais continuam
-   pendentes, ver `data/restricted/audit/questions-for-rodolfo.md`.
+   incerteza (ver [[11-DATABASE-V2-DESIGN]]); a Fase 3D reduziu o
+   restante a uma shortlist de 2 perguntas objetivas de negócio
+   (`BUSINESS_SEMANTICS_CONFIRMED` parcial — ver
+   [[17-AMBIGUITY-RESOLUTION-METHOD]]), ainda pendentes de validação
+   humana, ver `data/restricted/audit/questions-for-rodolfo.md`.
 2. **Dicionário de dados** — formalizar e expandir
    [[07-DATA-DICTIONARY]] cobrindo também os dados a importar das
    planilhas.
@@ -231,10 +262,13 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    A promoção de `staging` para `core`/`pricing` (Fase 3B) já foi
    feita para os candidatos `HIGH` — ver
    [[15-STAGING-TO-CANONICAL-PROMOTION]]. A Fase 3C tentou reproduzir
-   a lógica real de forma independente (`PARTIAL_REPRODUCTION` — ver
-   [[16-INDEPENDENT-PRICING-REPRODUCTION]]); nenhum resultado
-   `SYSTEM_CALCULATED` real foi produzido ainda, por lacunas de dado
-   documentadas, não de lógica.
+   a lógica real de forma independente (`PARTIAL_REPRODUCTION`) e a
+   Fase 3D fechou as ambiguidades que bloqueavam isso — resultado
+   `NEAR_EXACT_WITH_EXPLAINED_ROUNDING`, com
+   `MATHEMATICAL_REPRODUCTION_CONFIRMED` (ver
+   [[17-AMBIGUITY-RESOLUTION-METHOD]]). Os resultados reproduzidos
+   ainda vivem só no banco privado, num run de validação — nenhum foi
+   promovido a produção/recomendação.
 4. **PostgreSQL/PostGIS** — evoluir o schema atual (`database/schema.sql`)
    para suportar dados geoespaciais reais (hoje `developments` já tem
    `latitude`/`longitude` como `NUMERIC`, mas não há extensão PostGIS
@@ -270,13 +304,16 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
     `result_origin='IMPORTED_REFERENCE'` — importados da fonte, nunca
     calculados pelo sistema (ver [[04-DECISIONS]] D11 e
     [[15-STAGING-TO-CANONICAL-PROMOTION]]). A Fase 3C tentou produzir
-    o primeiro resultado `SYSTEM_CALCULATED` real, de forma
-    independente — resultado `PARTIAL_REPRODUCTION` (ver
-    [[16-INDEPENDENT-PRICING-REPRODUCTION]] e [[04-DECISIONS]] D12):
-    uma regra foi reproduzida de ponta a ponta, mas o preço final
-    continua bloqueado por lacunas de dado (não de lógica),
-    diretamente dependentes das perguntas ainda pendentes em
-    `data/restricted/audit/questions-for-rodolfo-shortlist-3c.md`.
+    o primeiro resultado `SYSTEM_CALCULATED` real de forma
+    independente (`PARTIAL_REPRODUCTION`) e a Fase 3D fechou as
+    ambiguidades que bloqueavam o preço final — 884/884 unidades
+    reproduzidas independentemente dentro de 1 centavo do preço já
+    existente na fonte (`NEAR_EXACT_WITH_EXPLAINED_ROUNDING`, ver
+    [[17-AMBIGUITY-RESOLUTION-METHOD]] e [[04-DECISIONS]] D12/D13).
+    `BUSINESS_SEMANTICS_CONFIRMED` permanece parcial — 2 perguntas de
+    negócio ainda pendentes em
+    `data/restricted/audit/questions-for-rodolfo-final.md`. Nenhum
+    resultado foi promovido a produção/recomendação nesta fase.
 11. **Simulador** — evoluir a "Calculadora" atual (client-side, sessão
     única) para um simulador robusto e auditável.
 12. **Painel** — evoluir as abas atuais de `index.html` para um painel

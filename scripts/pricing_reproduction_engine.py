@@ -59,6 +59,23 @@ def to_decimal(value: Any) -> Decimal | None:
         return None
 
 
+def normalize_key_component(value: Any) -> str | None:
+    """Normaliza um componente de chave numérico para texto sem casas
+    decimais redundantes (ex.: Decimal('3.0') -> '3') — equivalente
+    genérico ao comportamento do Excel ao concatenar um número em
+    texto (`RIGHT`/`&` tratam 3.0 como "3", nunca "3.0"). Se o valor
+    não for numérico, é devolvido como texto tal como está (permite
+    chaves categóricas, não só numéricas)."""
+    if value is None:
+        return None
+    dec = to_decimal(value) if not isinstance(value, Decimal) else value
+    if dec is None:
+        return str(value)
+    if dec == dec.to_integral_value():
+        return str(int(dec))
+    return format(dec, "f")
+
+
 def derive_magnitude_prefix_key(raw_value: str, threshold: Decimal, digits_below: int, digits_at_or_above: int) -> str | None:
     """Deriva uma chave de texto a partir dos N primeiros dígitos de um
     valor numérico, onde N depende de um limiar de magnitude — operação
@@ -109,6 +126,8 @@ class Ruleset:
             names += list(operands.get("factors", []))
         elif op == "lookup_table":
             names.append(operands["key_source_field"])
+        elif op == "lookup_table_composite":
+            names += list(operands["key_source_fields"])
         elif op == "multiply_by_parameter":
             names.append(operands["field"])
         elif op == "ratio_to_group_total":
@@ -289,6 +308,14 @@ class ReproductionEngine:
             key_source_field = operands["key_source_field"]
             derivation = operands.get("derivation")
             row_overrides = operands.get("row_key_overrides", {})  # {unit_id: forced_key}
+            # Valores explicitamente evidenciados para chaves cuja célula de
+            # fator é vazia na fonte (VLOOKUP/HLOOKUP do Excel trata célula
+            # vazia como 0 quando usada como valor de retorno — fato mecânico
+            # do Excel, não suposição de negócio). Só se aplica às chaves
+            # listadas aqui, nunca a qualquer chave ausente genericamente —
+            # cada uma precisa de evidência própria (ex.: valor cacheado de
+            # uma célula downstream real confirmando o 0).
+            missing_key_defaults = operands.get("missing_key_defaults", {})
             for u in units:
                 uid = u["unit_id"]
                 raw_key_source = u.get(key_source_field)
@@ -302,6 +329,31 @@ class ReproductionEngine:
                     )
                 else:
                     key = str(raw_key_source) if raw_key_source is not None else None
+                if key is not None and key in table:
+                    per_unit[uid][output] = to_decimal(table[key])
+                elif key is not None and key in missing_key_defaults:
+                    per_unit[uid][output] = to_decimal(missing_key_defaults[key])
+                else:
+                    per_unit[uid][output] = None
+
+        elif op == "lookup_table_composite":
+            # Busca genérica por chave composta (2+ componentes concatenados
+            # por um separador) — equivalente a um HLOOKUP/VLOOKUP de
+            # planilha cuja chave é montada por concatenação de texto
+            # (ex.: `campo_a & "-" & campo_b`). Nenhum componente da chave
+            # nem a tabela em si são conhecidos por este motor — vêm
+            # inteiramente do ruleset/tabela injetada em runtime.
+            table = operands["table"]
+            key_fields = operands["key_source_fields"]
+            separator = operands.get("key_separator", "-")
+            row_overrides = operands.get("row_key_overrides", {})
+            for u in units:
+                uid = u["unit_id"]
+                if uid in row_overrides:
+                    key = row_overrides[uid]
+                else:
+                    components = [normalize_key_component(u.get(f)) for f in key_fields]
+                    key = None if any(c is None for c in components) else separator.join(components)
                 if key is None or key not in table:
                     per_unit[uid][output] = None
                     continue

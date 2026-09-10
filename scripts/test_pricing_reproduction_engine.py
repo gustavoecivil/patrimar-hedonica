@@ -208,6 +208,57 @@ def run() -> int:
         "Decimal deveria preservar precisao total sem arredondamento automatico para 2 casas"
     checks += 1
 
+    # 13. lookup_table_composite -- busca 2D por chave composta (ex.: "setor-posicao"),
+    #     equivalente generico a um HLOOKUP/VLOOKUP cuja chave e' uma concatenacao de
+    #     dois campos (achado real da Fase 3D, aqui com nomes 100% ficticios)
+    ruleset_2d = {
+        "inputs": {"sector_code": {}, "slot_code": {}},
+        "rules": [
+            {"rule_id": "G2D", "output": "slot_factor", "operation": "lookup_table_composite",
+             "operands": {"key_source_fields": ["sector_code", "slot_code"], "key_separator": "-",
+                          "table": {"1-1": "0.05", "1-2": "0.10", "2-1": "0.02"}}},
+        ],
+    }
+    rs5 = Ruleset(ruleset_2d)
+    res5 = ReproductionEngine(rs5).compute([
+        {"unit_id": "s1", "group_id": "g1", "sector_code": "1", "slot_code": "1"},
+        {"unit_id": "s2", "group_id": "g1", "sector_code": "1", "slot_code": "2"},
+        {"unit_id": "s3", "group_id": "g1", "sector_code": "2", "slot_code": "1"},
+        {"unit_id": "s4", "group_id": "g1", "sector_code": "9", "slot_code": "9"},  # combinacao ausente
+    ])
+    assert res5["per_unit"]["s1"]["slot_factor"] == Decimal("0.05")
+    assert res5["per_unit"]["s2"]["slot_factor"] == Decimal("0.10")
+    assert res5["per_unit"]["s3"]["slot_factor"] == Decimal("0.02")
+    assert res5["per_unit"]["s4"]["slot_factor"] is None, "combinacao ausente da tabela nunca deve virar valor inventado"
+    # normalizacao: "1.0"/"1" devem produzir a mesma chave (equivalente ao RIGHT()/concat do Excel)
+    res5b = ReproductionEngine(rs5).compute([
+        {"unit_id": "s5", "group_id": "g1", "sector_code": "1.0", "slot_code": "1.0"},
+    ])
+    assert res5b["per_unit"]["s5"]["slot_factor"] == Decimal("0.05")
+    checks += 1
+
+    # 14. missing_key_defaults -- chave ausente da tabela, mas com default EXPLICITAMENTE
+    #     evidenciado (nunca um default generico "qualquer chave ausente vira X") continua
+    #     produzindo o valor default; qualquer OUTRA chave ausente sem default continua bloqueada
+    ruleset_default = {
+        "inputs": {"category_code": {}},
+        "rules": [
+            {"rule_id": "GD", "output": "category_factor", "operation": "lookup_table",
+             "operands": {"key_source_field": "category_code", "table": {"5": "0.20"},
+                          "missing_key_defaults": {"3": "0.0"}}},
+        ],
+    }
+    rs6 = Ruleset(ruleset_default)
+    res6 = ReproductionEngine(rs6).compute([
+        {"unit_id": "d1", "group_id": "g1", "category_code": "5"},
+        {"unit_id": "d2", "group_id": "g1", "category_code": "3"},
+        {"unit_id": "d3", "group_id": "g1", "category_code": "7"},
+    ])
+    assert res6["per_unit"]["d1"]["category_factor"] == Decimal("0.20")
+    assert res6["per_unit"]["d2"]["category_factor"] == Decimal("0.0"), "chave 3 tem default evidenciado explicito"
+    assert res6["per_unit"]["d3"]["category_factor"] is None, "chave 7 nao tem default -- deve continuar bloqueada, nunca 0 por acaso"
+    checks += 1
+
     print(f"OK: {checks} grupos de verificacao passaram (pricing_reproduction_engine, 100% sintetico)")
     return 0
 

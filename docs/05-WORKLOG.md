@@ -6,6 +6,131 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-10 — Fase 3D: Fechamento forense das ambiguidades e regras (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** resolver, usando primeiro toda a evidência disponível nos
+dois workbooks originais, os bloqueios que impediram a reprodução
+independente na Fase 3C — sem ajustar resultado por tentativa e erro,
+sem inventar parâmetro, sem inferir regra só porque reduz erro. Ver
+[[04-DECISIONS]] D13 e [[17-AMBIGUITY-RESOLUTION-METHOD]].
+
+**Classificação de evidência aplicada em toda conclusão:** `DIRECT` /
+`STRUCTURAL` / `INFERRED_STRONG` (podem desbloquear regra automática)
+vs. `INFERRED_WEAK` / `UNRESOLVED` (nunca viram regra executável sem
+revisão humana).
+
+**P1 — peso de posição: RESOLVIDO (evidência DIRECT).** Busca
+forense na fórmula real revelou uma busca horizontal com chave
+composta (2 campos já conhecidos concatenados) contra uma tabela de
+calibração nunca antes capturada, cujo índice de linha é uma fórmula
+auto-documentada que sempre resolve para a última linha do range —
+nunca ambígua. Tabela reconstruída por **parsing genérico da
+fórmula real** (nova função pública, nenhuma fórmula/constante
+hardcoded): 40 e 32 combinações, valores plausíveis. Desbloqueia
+PR-007 e toda a cadeia downstream.
+
+**P2 — semântica das áreas: RESOLVIDO (DIRECT/STRUCTURAL) — e um bug
+real corrigido.** A retratação da Fase 3C (2 componentes de área
+"implausíveis") tinha causa raiz num **defeito de software**: uma
+consulta que lia células de `raw.cells` filtrando só pelo arquivo,
+não pela aba específica — como duas abas diferentes do mesmo arquivo
+reaproveitam as mesmas letras de coluna para conteúdo totalmente
+diferente, a consulta misturava linhas de abas distintas sob o mesmo
+número de linha. Corrigido (escopo por aba, não por arquivo). Depois
+da correção, a identidade estrutural "soma dos 4 componentes = área
+total" (e a variante ponderada) fecha, exata ou por arredondamento,
+em **884/884 unidades nos 2 desenvolvimentos** — confirmação
+`STRUCTURAL` do papel de cada componente.
+
+**P3 — overrides: parcialmente resolvido.** Valores agora confiáveis
+(mesmo bug corrigido) — soma bate exatamente com o agregado já
+existente na fonte nos 2 desenvolvimentos (147 unidades com ajuste
+não-zero, não 188 como a Fase 3C havia contado, também afetada pelo
+mesmo bug). Critério de negócio por trás de cada ajuste continua
+`INFERRED_WEAK` — vira pergunta para consulta humana.
+
+**P4 — 4 unidades sem peso de pavimento: RESOLVIDO (DIRECT).** A
+célula de fator está genuinamente vazia na fonte, mas a fórmula real
+downstream tem valor cacheado `0.0` para as 4 linhas — confirma que o
+Excel trata célula vazia como zero quando usada como retorno de
+busca (fato mecânico do Excel). `floor_factor` agora computável para
+884/884 unidades.
+
+**Resultado agregado da reprodução (ruleset v2, números apenas, sem
+conteúdo):**
+
+| Item | Resultado |
+|---|---|
+| Unidades total / calculadas / bloqueadas | 884 / 884 / 0 |
+| Dentro de 1 centavo do preço de referência | 884/884 (100%) |
+| MAE / RMSE / erro máximo (precisão total, antes do arredondamento monetário) | ≈R$0,0025 / ≈R$0,0029 / ≈R$0,0050 |
+| Delta agregado de VGV (global) | ≈-R$0,13 em base de dezenas de milhões |
+| Classificação | `NEAR_EXACT_WITH_EXPLAINED_ROUNDING` |
+| `MATHEMATICAL_REPRODUCTION_CONFIRMED` | true |
+| `BUSINESS_SEMANTICS_CONFIRMED` | parcial (P1/P2/P4 sim; P3 e origem dos valores da tabela de posição não) |
+
+**Nenhuma hipótese contaminada:** todas as 3 descobertas desta fase
+foram comprovadas via evidência estrutural interna (identidade de
+área, fórmula real, valor cacheado) **antes** de qualquer comparação
+contra o preço de referência — nunca ajustadas olhando o resultado
+final.
+
+**Ruleset:** nova versão privada (`reproduction_rules_v2`,
+versão-mãe declarada, `changes`/`evidence`/`reason` registrados por
+mudança) — a v1 (Fase 3C, com suas 3 sub-tentativas) permanece
+intacta no banco privado como histórico, nunca sobrescrita.
+
+**Engine genérico ampliado** (`scripts/pricing_reproduction_engine.py`,
+2 capacidades novas, testadas só com dados fictícios): busca por
+chave composta (`lookup_table_composite`); valor default
+explicitamente evidenciado para uma chave ausente específica
+(`missing_key_defaults`, nunca um default genérico para qualquer
+chave ausente).
+
+**Artefatos privados criados/atualizados** (todos em
+`data/restricted/`, nunca versionados):
+`pricing_rules/reproduction_rules_v2.json`;
+`audit/ambiguity-resolution-summary.md`,
+`position-formula-trace.csv`, `area-semantics-analysis.csv`,
+`override-pattern-analysis.csv`, `missing-floor-factor-analysis.md`,
+`questions-for-rodolfo-final.md` (2 perguntas, português simples, sem
+jargão técnico), `reproduction-metrics.csv` (nova seção anexada, v1
+preservada), `reproduction-change-log.md` (nova seção anexada);
+`backups/private_dev_POST_3D_AMBIGUITY_RESOLUTION_*.dump`.
+
+**Documentação pública criada/atualizada:**
+[[17-AMBIGUITY-RESOLUTION-METHOD]] (novo); [[04-DECISIONS]] (D13,
+nova); [[03-ROADMAP]] (referências sanitizadas).
+
+**Verificação de segurança:** nenhuma fórmula, constante ou valor
+real em código público; nenhuma senha/dump/ruleset versionado;
+`data/restricted/` confirmado não rastreado; busca textual nos
+artefatos novos contra nomes/hashes privados conhecidos — nenhuma
+ocorrência.
+
+**Testes:** `scripts/test_pricing_reproduction_engine.py` (14/14,
+2 verificações novas: busca composta + default evidenciado) —
+**PASSOU**; `test_promote_staging_to_core.py` (12/12, reconfirmado),
+`test_ingest_xlsx_postgres.py` (19/19, reconfirmado),
+`test_reference_allocation_engine.py` (21/21) — **PASSOU**;
+`validate_db_v2.py` (10 arquivos de DDL + seed) — **PASSOU**;
+`test_validate_db_v2.py` — **PASSOU**; `verify_postgres_v2.py` contra
+`patrimar_pricing_v2_test` — **PASSOU** (banco sintético confirmado
+intacto, hash lógico idêntico); `npm run test:model` — **PASSOU**.
+`database/schema.sql`, `index.html`,
+`netlify/functions/hedonic-data.mts` e as migrations Netlify
+existentes confirmados sem alteração.
+
+**Estado final:** `patrimar_pricing_v2_private_dev` agora tem uma
+execução de reprodução `v2` com 884/884 comparações dentro de 1
+centavo, além do histórico completo da Fase 3C preservado.
+`patrimar_pricing_v2_test` permanece intacto.
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-10 — Fase 3C: Reprodução independente da lógica de precificação (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

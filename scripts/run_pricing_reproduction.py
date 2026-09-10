@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -54,19 +55,27 @@ def fetch_units_with_lineage(psql_bin: str, development_id: str) -> list[dict]:
     return ing.run_query_csv(
         psql_bin,
         "SELECT u.id AS unit_id, u.unit_code, u.closed_area_m2, u.open_terrace_area_m2, u.position_code, "
+        "t.business_key AS tower_key, "
         "sc.source_workbook_id, sc.source_sheet_id, sc.source_row "
         "FROM core.units u JOIN staging.unit_candidates sc ON sc.promoted_entity_id = u.id "
+        "LEFT JOIN core.towers t ON t.id = u.tower_id "
         f"WHERE u.development_id = {sql_str(development_id)} ORDER BY sc.source_row;",
     )
 
 
-def fetch_raw_columns_by_row(psql_bin: str, workbook_id: str, columns: list[str]) -> dict[int, dict[str, str]]:
+def fetch_raw_columns_by_row(psql_bin: str, sheet_id: str, columns: list[str]) -> dict[int, dict[str, str]]:
+    # Escopado por sheet_id (nunca só workbook_id): um workbook tem várias
+    # abas, e a mesma letra de coluna (ex.: "H") existe em mais de uma aba
+    # com conteúdo completamente diferente — filtrar só por workbook_id
+    # misturava linhas de abas distintas sob a mesma chave row_number,
+    # produzindo valores "implausíveis" que na verdade vinham de outra aba
+    # (achado real da Fase 3D, corrigindo uma conclusão errada da Fase 3C).
     col_list = ", ".join(sql_str(c) for c in columns)
     rows = ing.run_query_csv(
         psql_bin,
         "SELECT rc.row_number, rc.column_letters, COALESCE(rc.raw_value, rc.cached_value) AS value_text "
-        "FROM raw.cells rc JOIN raw.sheets s ON s.id = rc.sheet_id "
-        f"WHERE s.workbook_id = {sql_str(workbook_id)} AND rc.column_letters IN ({col_list});",
+        "FROM raw.cells rc "
+        f"WHERE rc.sheet_id = {sql_str(sheet_id)} AND rc.column_letters IN ({col_list});",
     )
     by_row: dict[int, dict[str, str]] = {}
     for r in rows:
@@ -96,6 +105,78 @@ def fetch_calibration_table(psql_bin: str, development_id: str, dimension: str) 
     return {r["category_key"]: r["factor"] for r in rows}
 
 
+HLOOKUP_RE = re.compile(
+    r"HLOOKUP\([^,]+,\s*'?([^'!]+)'?!\$([A-Z]+)\$(\d+):\$([A-Z]+)\$(\d+)\s*,\s*'?([^'!]+)'?!\$([A-Z]+)\$(\d+)",
+)
+
+
+def fetch_composite_lookup_table_from_formula(
+    psql_bin: str, workbook_id: str, formula_sheet: str, formula_column: str, anchor_row: int,
+) -> dict[str, str] | None:
+    """Reconstrói genericamente uma tabela de busca (chave->fator) a
+    partir de uma fórmula HLOOKUP real, sem conhecer de antemão nem a
+    aba nem o range nem a célula de índice — tudo isso é PARSEADO da
+    própria fórmula (evidência DIRECT, Fase 3D Passo 3/12), nunca
+    hardcoded. `formula_sheet`/`formula_column`/`anchor_row` (onde ler a
+    fórmula original) vêm do ruleset privado, nunca deste código.
+
+    Reaproveita o mesmo padrão já comprovado para o índice de linha do
+    VLOOKUP de pavimento (Fase 3A): a célula de índice costuma ser uma
+    fórmula auto-documentada (`ROWS(...)`/`COLUMNS(...)`) que sempre
+    resolve para a borda do range — por isso a linha/coluna de fator é
+    sempre recalculada a partir do range + índice, nunca fixada."""
+    formula_rows = ing.run_query_csv(
+        psql_bin,
+        "SELECT rc.formula_expression FROM raw.cells rc JOIN raw.sheets s ON s.id=rc.sheet_id "
+        f"WHERE s.workbook_id={sql_str(workbook_id)} AND s.sheet_name={sql_str(formula_sheet)} "
+        f"AND rc.column_letters={sql_str(formula_column)} AND rc.row_number={sql_num(anchor_row)};",
+    )
+    if not formula_rows or not formula_rows[0].get("formula_expression"):
+        return None
+    m = HLOOKUP_RE.search(formula_rows[0]["formula_expression"])
+    if not m:
+        return None
+    range_sheet, col_a, row_a, col_b, row_b, idx_sheet, idx_col, idx_row = m.groups()
+    row_a, row_b, idx_row = int(row_a), int(row_b), int(idx_row)
+
+    idx_cell_rows = ing.run_query_csv(
+        psql_bin,
+        "SELECT COALESCE(raw_value, cached_value) AS value_text FROM raw.cells rc "
+        "JOIN raw.sheets s ON s.id=rc.sheet_id "
+        f"WHERE s.workbook_id={sql_str(workbook_id)} AND s.sheet_name={sql_str(idx_sheet)} "
+        f"AND rc.column_letters={sql_str(idx_col)} AND rc.row_number={sql_num(idx_row)};",
+    )
+    if not idx_cell_rows or not idx_cell_rows[0]["value_text"]:
+        return None
+    row_index = int(float(idx_cell_rows[0]["value_text"]))
+    factor_row = row_a + row_index - 1
+
+    col_start = ing.ax.col_letters_to_index(col_a)
+    col_end = ing.ax.col_letters_to_index(col_b)
+    grid_rows = ing.run_query_csv(
+        psql_bin,
+        "SELECT rc.row_number, rc.column_letters, rc.column_index, "
+        "COALESCE(rc.raw_value, rc.cached_value) AS value_text FROM raw.cells rc "
+        "JOIN raw.sheets s ON s.id=rc.sheet_id "
+        f"WHERE s.workbook_id={sql_str(workbook_id)} AND s.sheet_name={sql_str(range_sheet)} "
+        f"AND rc.row_number IN ({sql_num(row_a)}, {sql_num(factor_row)}) "
+        f"AND rc.column_index BETWEEN {sql_num(col_start)} AND {sql_num(col_end)};",
+    )
+    header_by_col, factor_by_col = {}, {}
+    for r in grid_rows:
+        rn = int(r["row_number"])
+        if rn == row_a:
+            header_by_col[r["column_letters"]] = r["value_text"]
+        elif rn == factor_row:
+            factor_by_col[r["column_letters"]] = r["value_text"]
+
+    table = {}
+    for col, key in header_by_col.items():
+        if key and col in factor_by_col and factor_by_col[col] not in (None, ""):
+            table[key] = factor_by_col[col]
+    return table or None
+
+
 def _numeric_or_none(text: str | None) -> str | None:
     """Retorna o texto original se ele parece um numero (para o motor
     converter em Decimal), ou None se for vazio/nao-numerico -- nunca
@@ -123,14 +204,17 @@ def load_calculation_inputs(psql_bin: str, development_id: str, ruleset: engine_
         "balcony_and_ancillary_area_columns_H_I", {})
     h_i_confirmed = dev_business_key in h_i_confirmation.get("confirmed_for_business_keys", [])
 
-    by_workbook: dict[str, dict[int, dict[str, str]]] = {}
+    implicit_tower_keys = ruleset.data.get("implicit_tower_key_by_development", {})
+    implicit_tower_key = implicit_tower_keys.get(dev_business_key)
+
+    by_sheet: dict[str, dict[int, dict[str, str]]] = {}
     units: list[dict] = []
     non_numeric_h_i = 0
     for u in unit_rows:
-        wb = u["source_workbook_id"]
-        if wb not in by_workbook:
-            by_workbook[wb] = fetch_raw_columns_by_row(psql_bin, wb, ["H", "I", "AB"])
-        row_cells = by_workbook[wb].get(int(u["source_row"]), {})
+        sheet_id = u["source_sheet_id"]
+        if sheet_id not in by_sheet:
+            by_sheet[sheet_id] = fetch_raw_columns_by_row(psql_bin, sheet_id, ["H", "I", "AB"])
+        row_cells = by_sheet[sheet_id].get(int(u["source_row"]), {})
         if h_i_confirmed:
             balcony = _numeric_or_none(row_cells.get("H"))
             ancillary = _numeric_or_none(row_cells.get("I"))
@@ -154,6 +238,7 @@ def load_calculation_inputs(psql_bin: str, development_id: str, ruleset: engine_
             "ancillary_area_derived": ancillary,
             "unit_code_raw": u["unit_code"],
             "position_code_raw": u["position_code"],
+            "tower_key_raw": u["tower_key"] if u.get("tower_key") not in (None, "") else implicit_tower_key,
             "UNCOVERED_AREA_FACTOR": params.get("UNCOVERED_AREA_FACTOR"),
             "TARGET_PRICE_PER_M2": params.get("TARGET_PRICE_PER_M2"),
             "override_amount_derived": override_val if override_val is not None else ("0" if override_raw in (None, "") else None),
@@ -162,6 +247,17 @@ def load_calculation_inputs(psql_bin: str, development_id: str, ruleset: engine_
 
     floor_table = fetch_calibration_table(psql_bin, development_id, "FLOOR")
     ruleset.rules["floor_factor"]["operands"]["table"] = floor_table
+    floor_defaults = ruleset.data.get("floor_missing_key_defaults_by_development", {})
+    ruleset.rules["floor_factor"]["operands"]["missing_key_defaults"] = floor_defaults.get(dev_business_key, {})
+
+    position_rule = ruleset.rules.get("position_factor", {})
+    formula_source = position_rule.get("formula_source")
+    if formula_source and position_rule.get("status") == "ACTIVE" and unit_rows:
+        position_table = fetch_composite_lookup_table_from_formula(
+            psql_bin, unit_rows[0]["source_workbook_id"],
+            formula_source["sheet"], formula_source["column"], int(unit_rows[0]["source_row"]),
+        )
+        position_rule["operands"]["table"] = position_table or {}
 
     anomaly = ruleset.rules["floor_factor"].get("anomaly_pr018")
     row_overrides: dict[str, str] = {}
