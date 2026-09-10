@@ -28,6 +28,7 @@ para o mapeamento detalhado dos conceitos observados nas planilhas.
 005_market_foundation.sql      -- models, model_versions, predictions + FK pendente de 003
 006_indexes.sql                  -- índices
 007_views.sql                     -- pricing.v_unit_price_current
+008_ingestion.sql                  -- raw.* (fidelidade da fonte) + staging.* (candidatos normalizados) — Fase 3A
 ```
 
 **Por que algumas foreign keys são adicionadas via `ALTER TABLE` em
@@ -151,11 +152,17 @@ pela camada de serviço/pipeline futura, nunca bloqueada pelo banco.
   "trigger complexa" que a Fase 2 pediu para evitar quando uma
   constraint mais simples ou lógica de serviço for suficiente.
 
-## Entidades implementadas nesta fase
+## Entidades implementadas
 
-Ver [[docs/11-DATABASE-V2-DESIGN]] para a tabela completa. Resumo:
-`core` (4 tabelas), `pricing` (12 tabelas), `audit` (2 tabelas),
-`market` (3 tabelas) — total de 21 tabelas físicas, mais 1 view.
+Ver [[docs/11-DATABASE-V2-DESIGN]] para a tabela completa da Fase 2.
+Resumo (Fase 2): `core` (4 tabelas), `pricing` (12 tabelas), `audit`
+(2 tabelas), `market` (3 tabelas) — 21 tabelas físicas, mais 1 view.
+**Fase 3A** adicionou `raw` (4 tabelas: `ingest_batches`, `workbooks`,
+`sheets`, `cells`) e `staging` (5 tabelas: `unit_candidates`,
+`parameter_candidates`, `calibration_candidates`,
+`price_output_candidates`, `mapping_review`) — ver
+[[docs/14-PRIVATE-DATA-INGESTION]]. Total agora: 6 schemas, 30 tabelas
+físicas, 1 view.
 
 ## Pendências e decisões adiadas
 
@@ -165,9 +172,11 @@ Ver [[docs/11-DATABASE-V2-DESIGN]] para a tabela completa. Resumo:
 - **`audit.decisions`** (aprovação/revisão humana formal): adiada —
   `pricing.unit_overrides` já cobre a decisão de override em si; um
   fluxo de aprovação separado não tem requisito confirmado ainda.
-- **`raw`/`staging`**: documentadas como plano futuro, sem schema
-  físico criado nesta fase (nenhuma tabela derivada de planilha
-  privada é criada em nenhum arquivo deste diretório).
+- **Promoção `staging` → `core`/`pricing`**: fora de escopo da Fase
+  3A. `staging.*` guarda apenas candidatos com rastreabilidade e nível
+  de confiança — nenhuma linha real chega a `core`/`pricing`/`market`
+  ainda (ver [[docs/14-PRIVATE-DATA-INGESTION]], Fase 3B é o próximo
+  passo planejado para isso).
 - **Atributo de posição/lado (`core.units.position_code`)**: mantido
   genérico (texto livre) porque o significado exato ainda não foi
   confirmado — pergunta bloqueante de schema pendente (equivalente a

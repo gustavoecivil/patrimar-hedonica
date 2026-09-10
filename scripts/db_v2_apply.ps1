@@ -54,7 +54,8 @@ $ddlFiles = @(
     "database/v2/004_audit.sql",
     "database/v2/005_market_foundation.sql",
     "database/v2/006_indexes.sql",
-    "database/v2/007_views.sql"
+    "database/v2/007_views.sql",
+    "database/v2/008_ingestion.sql"
 )
 
 foreach ($f in $ddlFiles) {

@@ -12,56 +12,72 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
 4. [[03-ROADMAP]] — o que vem depois (ainda não implementado).
 5. [[04-DECISIONS]] — regras que não devem ser quebradas sem registro
    (D7 dois motores; D8 referência sintética não é metodologia
-   oficial; D9 testes de banco real isolados sem alterar servidor).
+   oficial; D9 testes de banco real isolados sem alterar servidor;
+   D10 banco privado de ingestão separado do banco sintético).
 6. [[08-SPREADSHEET-AUDIT-METHOD]], [[09-PRICING-LOGIC-REVERSE-ENGINEERING]],
    [[10-PRICING-DOMAIN-MODEL]], [[11-DATABASE-V2-DESIGN]],
    [[12-REFERENCE-ALLOCATION-ENGINE]] — metodologia/modelo das fases
    anteriores, sem conteúdo privado.
 7. [[13-POSTGRESQL-V2-RUNTIME-VALIDATION]] — execução real contra
-   PostgreSQL, os dois defeitos encontrados e corrigidos.
-8. Este documento (99-HANDOFF) — estado exato da última execução.
+   PostgreSQL, os dois defeitos encontrados e corrigidos (Fase 2C).
+8. [[14-PRIVATE-DATA-INGESTION]] — ingestão controlada RAW/STAGING das
+   planilhas reais (Fase 3A).
+9. Este documento (99-HANDOFF) — estado exato da última execução.
 
-## Estado atual (2026-09-09, Fase 2C)
+## Estado atual (2026-09-09, Fase 3A)
 
 - **Branch de trabalho:** `rebuild/pricing-intelligence`, rastreando
   `origin/rebuild/pricing-intelligence`. `main` intocada em `7dd1d24`.
-- **O schema v2 e o seed sintético agora rodam de verdade em
-  PostgreSQL.** Banco de teste isolado `patrimar_pricing_v2_test`
-  (PostgreSQL 18.4, servidor local pré-existente, nenhuma instalação
-  nova) **permanece ativo** para a próxima fase — não foi removido.
-  Credenciais em `.env.pricing_v2_test` (local, `.gitignore`, nunca
-  commitado). Ver [[04-DECISIONS]] D9.
-- **Dois defeitos reais foram encontrados e corrigidos** só ao
-  executar contra PostgreSQL de fato (a validação estrutural da Fase
-  2 não os detectava): (1) empate de timestamp entre as duas runs do
-  seed deixava a view `pricing.v_unit_price_current` não
-  determinística; (2) o hash lógico do motor de referência usava mais
-  precisão do que a coluna `participation_share` persiste. Ambos
-  corrigidos em `database/v2/007_views.sql`,
-  `scripts/generate_v2_seed.py` e
-  `scripts/reference_allocation_engine.py` — ver
-  [[13-POSTGRESQL-V2-RUNTIME-VALIDATION]] para o detalhe completo.
-  **O hash lógico mudou** de `9a955e21...` (Fase 2B) para
-  `f065d105...` (Fase 2C, correto) — qualquer referência ao hash
-  antigo em conversas/anotações anteriores está obsoleta.
-- **Determinismo confirmado ponta a ponta**: hash recalculado a
-  partir dos dados persistidos no PostgreSQL é idêntico ao hash do
-  motor Python puro, inclusive depois de recriar o ambiente do zero
-  duas vezes.
-- **7 tentativas de inserção inválida, todas corretamente rejeitadas**
-  pelo PostgreSQL real (FK, `CHECK` de preço negativo, `CHECK` de
-  status inválido, `UNIQUE` de business_key duplicada, FK composta de
-  override incoerente, `UNIQUE` de calibração duplicada, índice único
-  parcial de segundo cenário `ACTIVE`).
-- **Histórico confirmado preservado**: as duas runs coexistem, preço
-  sistemático da unidade com override é idêntico nas duas (nunca
-  sobrescrito), a tabela de overrides tem só 1 linha.
-- **Ferramentas novas:** `scripts/verify_postgres_v2.py` (compara
-  banco real × `fixtures/v2/reference_allocation_expected.json`,
-  incluindo o hash lógico); `scripts/db_v2_create_test.ps1` /
-  `db_v2_apply.ps1` / `db_v2_verify.ps1` / `db_v2_drop_test.ps1`
-  (wrappers PowerShell, os que alteram dado recusam operar fora de um
-  banco cujo nome contenha `_test` — testado).
+- **As duas planilhas reais de Rodolfo agora existem, pela primeira
+  vez, dentro de um banco de dados.** Banco novo e **privado**,
+  `patrimar_pricing_v2_private_dev` (mesmo servidor PostgreSQL 18.4
+  local pré-existente), **totalmente separado** do banco sintético de
+  teste `patrimar_pricing_v2_test` (Fase 2C, que permanece intacto —
+  ver [[04-DECISIONS]] D10). Credenciais em
+  `.env.pricing_v2_private_dev` (local, `.gitignore`, senha gerada
+  nesta sessão, nunca impressa em nenhum relatório).
+- **Destino exclusivo: schemas `raw`/`staging`
+  (`database/v2/008_ingestion.sql`).** Zero linhas em
+  `core`/`pricing`/`market` nesse banco. Nenhum preço foi calculado
+  ou reproduzido; `REFERENCE_ALLOCATION_V1` (D8) não foi usado sobre
+  dado real.
+- **Fidelidade total confirmada:** 25.023 células / 18.377 fórmulas
+  ingeridas, reconciliação exata com o inventário estrutural da Fase
+  1B; 263 células amostradas deterministicamente, 0 divergências.
+- **Idempotência confirmada duas vezes contra PostgreSQL real:**
+  reingerir o mesmo arquivo (mesmo SHA-256) produz `ALREADY_INGESTED`
+  e não duplica nenhuma linha.
+- **Mapeamento por confiança:** 27 entradas privadas (14 `HIGH`, 11
+  `MEDIUM`, 2 `LOW`). Só `HIGH` foi convertido automaticamente para
+  candidato de staging (884 unidade + 884 resultado de preço + 8
+  parâmetro + 31 calibração); `MEDIUM`/`LOW` foram para
+  `staging.mapping_review` (13 linhas), nunca convertidos
+  automaticamente. Zero linhas de staging órfãs.
+- **Um bug real de extração foi encontrado e corrigido**: uma coluna
+  de identificador de unidade é majoritariamente **fórmula de
+  incremento**, não valor manual — a extração inicial só lia
+  `raw_value` (NULL nesses casos) e capturou ~8% dos registros
+  esperados. Corrigido com `COALESCE(raw_value, cached_value)`. Ver
+  [[14-PRIVATE-DATA-INGESTION]] e o worklog desta fase para o
+  detalhe completo (incluindo os outros 3 bugs menores corrigidos:
+  ambiguidade `""`/`NULL` em CSV do `psql`, coluna de linhagem
+  ausente em `staging.calibration_candidates`, corrupção de
+  acentuação via argumento de linha de comando no Windows).
+- **Avaliação de chave candidata com evidência real**: confirma que
+  um identificador de negócio isolado não é suficiente como chave num
+  dos dois workbooks (precisa de chave composta com a subdivisão
+  interna do empreendimento); no outro, é suficiente isoladamente —
+  consistente com a decisão de schema já tomada na Fase 2
+  (`UNIQUE(development_id, tower_id, unit_code)`).
+- **Teste público sintético criado:**
+  `scripts/test_ingest_xlsx_postgres.py` — prova o pipeline completo
+  (ingest-raw, idempotência, stage com `HIGH`/`MEDIUM`/`LOW`,
+  lineage, e reversão de transação com marcação `FAILED`) usando
+  exclusivamente um workbook `.xlsx` fabricado em memória. Executado
+  com sucesso contra PostgreSQL real neste ambiente.
+- **Banco de teste sintético (`patrimar_pricing_v2_test`, Fase 2C)
+  confirmado intacto** ao final desta fase — `verify_postgres_v2.py`
+  reexecutado com sucesso, hash lógico idêntico ao esperado.
 - `npm run test:model` re-executado: **PASSOU**, mesmo resultado das
   fases anteriores.
 
@@ -76,39 +92,37 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
 7. `f5a2cb2` — `docs: define Patrimar pricing domain model` (Fase 1D).
 8. `e59157e` — `feat: design canonical PostgreSQL v2 schema` (Fase 2).
 9. `866e876` — `feat: prove unit allocation engine with synthetic scenario` (Fase 2B).
-10. (Fase 2C) commit — `test: validate pricing v2 on real PostgreSQL`
-    (`database/v2/007_views.sql` corrigido,
-    `scripts/generate_v2_seed.py` corrigido,
-    `scripts/reference_allocation_engine.py` corrigido,
-    `database/v2/seeds/001_demo_allocation.sql` regenerado,
-    `fixtures/v2/reference_allocation_expected.json`/`report.md`
-    regenerados, `scripts/verify_postgres_v2.py`,
-    `scripts/db_v2_*.ps1`, `docs/13-POSTGRESQL-V2-RUNTIME-VALIDATION.md`,
-    `docs/03-ROADMAP.md`, `docs/04-DECISIONS.md`, `docs/05-WORKLOG.md`,
-    `docs/99-HANDOFF.md` — tudo público/sintético, nenhum dado
-    privado, nenhuma credencial).
+10. `c72fe0c` — `test: validate pricing v2 on real PostgreSQL` (Fase 2C).
+11. (Fase 3A) commit — `feat: add controlled private data ingestion
+    pipeline` (`database/v2/008_ingestion.sql`,
+    `scripts/ingest_xlsx_postgres.py`,
+    `scripts/test_ingest_xlsx_postgres.py`,
+    `scripts/db_v2_apply.ps1` atualizado,
+    `docs/14-PRIVATE-DATA-INGESTION.md`, `docs/03-ROADMAP.md`,
+    `docs/04-DECISIONS.md`, `docs/05-WORKLOG.md`,
+    `docs/07-DATA-DICTIONARY.md`, `docs/99-HANDOFF.md` — tudo
+    público/genérico, nenhum dado privado, nenhuma credencial).
 
 Nenhum desses commits contém dado privado ou segredo. `data/restricted/`
-nunca foi (e não pode ser) adicionada a nenhum commit. `.env.pricing_v2_test`
-nunca foi (e não pode ser) adicionado a nenhum commit.
+nunca foi (e não pode ser) adicionada a nenhum commit. Nenhum
+`.env.*` nunca foi (e não pode ser) adicionado a nenhum commit.
 
-## Arquivos criados/alterados até agora neste histórico (Fase 0 a 2C)
+## Arquivos criados/alterados nesta fase (Fase 3A)
 
 ```
-docs/00 .. docs/12 (fases anteriores)
-docs/13-POSTGRESQL-V2-RUNTIME-VALIDATION.md            (Fase 2C)
-docs/99-HANDOFF.md (este arquivo)
-database/v2/007_views.sql                              (corrigido na Fase 2C — desempate defensivo)
-database/v2/seeds/001_demo_allocation.sql              (regenerado na Fase 2C — timestamps deterministicos)
-scripts/reference_allocation_engine.py                 (corrigido na Fase 2C — precisao do hash)
-scripts/generate_v2_seed.py                            (corrigido na Fase 2C)
-scripts/verify_postgres_v2.py                          (Fase 2C)
-scripts/db_v2_create_test.ps1, db_v2_apply.ps1,
-  db_v2_verify.ps1, db_v2_drop_test.ps1                (Fase 2C)
-fixtures/v2/reference_allocation_expected.json,
-  reference_allocation_report.md                       (regenerados na Fase 2C — hash novo)
-.env.pricing_v2_test                                   (LOCAL, NAO versionado — credenciais do banco de teste)
-data/restricted/  (local, NÃO versionado — inalterado nesta fase)
+docs/14-PRIVATE-DATA-INGESTION.md                      (novo)
+docs/03-ROADMAP.md, 04-DECISIONS.md, 05-WORKLOG.md,
+  07-DATA-DICTIONARY.md, 99-HANDOFF.md                 (atualizados)
+database/v2/008_ingestion.sql                          (novo — schemas raw/staging)
+database/v2/README.md                                  (atualizado — ordem de execução + contagem de tabelas)
+scripts/ingest_xlsx_postgres.py                        (novo)
+scripts/test_ingest_xlsx_postgres.py                   (novo — teste público sintético)
+scripts/db_v2_apply.ps1                                (atualizado — inclui 008_ingestion.sql)
+.env.pricing_v2_private_dev                            (LOCAL, NAO versionado — credenciais do banco privado)
+data/restricted/staging/source-to-canonical-mapping.json (LOCAL, NAO versionado)
+data/restricted/staging/_gen_mapping.py                (LOCAL, NAO versionado)
+data/restricted/audit/staging-profile.csv              (LOCAL, NAO versionado)
+data/restricted/audit/ingestion-validation.md          (LOCAL, NAO versionado)
 ```
 
 Nenhum arquivo pré-existente do laboratório (`index.html`, `MODEL.md`,
@@ -125,35 +139,40 @@ fase até agora — confirmado via `git log` em cada um deles nesta fase.
    ativo, e se `GET /api/hedonic-data` responde em produção.
 3. **Dados reais da Patrimar não devem ser commitados** — ver
    [[04-DECISIONS]] D4/D6. Qualquer dado real deve ir para
-   `data/restricted/`, nunca para caminho versionado.
+   `data/restricted/` ou para o banco privado `_private_dev`, nunca
+   para caminho versionado.
 4. **`REFERENCE_ALLOCATION_V1` nunca deve ser confundido com a
-   metodologia real** — ver [[04-DECISIONS]] D8.
-5. **O banco de teste `patrimar_pricing_v2_test` está ativo num
-   servidor PostgreSQL local pré-existente que provavelmente serve
-   outros projetos do usuário** (visto em `D:\GSA\PostgreSQL\...`).
-   Não assumir que é um servidor dedicado só a este projeto — nunca
-   rodar comandos administrativos amplos (`DROP` de outros bancos,
-   mudança de config global) nele. Os scripts `db_v2_*.ps1` já têm
-   essa proteção embutida para o próprio banco de teste, mas o
-   próximo agente deve manter a mesma cautela em qualquer comando
-   manual.
-6. **O hash lógico de referência mudou nesta fase** (de `9a955e21...`
-   para `f065d105...`) por causa da correção de precisão — qualquer
-   anotação/memória externa com o hash antigo está obsoleta.
-7. **`main` e `rebuild/pricing-intelligence` divergirão** até decisão
+   metodologia real** — ver [[04-DECISIONS]] D8. Nesta fase ele
+   continua não usado sobre dado real (correto, por design).
+5. **Dois bancos PostgreSQL locais agora existem no mesmo servidor
+   pré-existente** (`patrimar_pricing_v2_test` e
+   `patrimar_pricing_v2_private_dev`) — provavelmente ao lado de
+   outros projetos do usuário. Não assumir que é um servidor
+   dedicado só a este projeto — nunca rodar comandos administrativos
+   amplos nele. Nunca misturar dado real no banco `_test`, nem dado
+   sintético de demonstração no banco `_private_dev` (ver D10) — os
+   dois devem continuar servindo propósitos diferentes.
+6. **`main` e `rebuild/pricing-intelligence` divergirão** até decisão
    explícita de merge/substituição.
-8. **`data/restricted/` existe apenas localmente** e não foi tocada
-   nesta fase.
-9. **O Motor A (Market Pricing Engine) ainda não tem nenhuma fonte de
+7. **`data/restricted/` continua existindo apenas localmente** — esta
+   fase adicionou arquivos novos lá (mapeamento, perfil de staging,
+   relatório de validação), nenhum deles versionado.
+8. **O Motor A (Market Pricing Engine) ainda não tem nenhuma fonte de
    dado real** — fora de escopo desta fase também.
-10. **Perguntas ainda pendentes para quem forneceu a planilha** — ver
-    `data/restricted/audit/questions-for-rodolfo.md`.
-11. **Os dois defeitos corrigidos nesta fase (timestamp/precisão)
-    só apareceram ao executar de verdade** — reforça que qualquer
-    mudança futura no schema v2 ou no motor de referência deve ser
-    revalidada contra um PostgreSQL real, não só pelo parser
-    estrutural (`scripts/validate_db_v2.py`), antes de ser
-    considerada confiável.
+9. **Perguntas ainda pendentes para quem forneceu a planilha** — ver
+   `data/restricted/audit/questions-for-rodolfo.md`. Esta fase reforçou
+   pelo menos duas delas com evidência adicional (estrutura de torres
+   de um dos workbooks; significado de um rótulo de tipologia que
+   parece genérico) — ver `data/restricted/audit/ingestion-validation.md`.
+10. **11 registros `MEDIUM`/`LOW` permanecem em `staging.mapping_review`
+    sem conversão automática** — decisão correta por design (D-implícita
+    desta fase: "não inventar significado"), mas qualquer trabalho
+    futuro de promoção staging→core deve tratá-los explicitamente, não
+    ignorá-los silenciosamente.
+11. **A Fase 3B (mapeamento staging → core/pricing) ainda não foi
+    iniciada.** Antes de iniciá-la, considerar levar as perguntas
+    pendentes de Rodolfo ao responsável do projeto — várias decisões
+    de promoção dependem das respostas.
 
 ## Comandos úteis já validados
 
@@ -164,28 +183,37 @@ python scripts/test_validate_db_v2.py
 python scripts/validate_db_v2.py --sql-dir database/v2 \
   --file 001_schemas.sql --file 002_core.sql --file 003_pricing.sql \
   --file 004_audit.sql --file 005_market_foundation.sql \
-  --file 006_indexes.sql --file 007_views.sql \
+  --file 006_indexes.sql --file 007_views.sql --file 008_ingestion.sql \
   --seed-file database/v2/seeds/001_demo_allocation.sql
 
-# contra o banco de teste real (requer .env.pricing_v2_test local e psql no PATH/PSQL_BIN):
+# contra o banco de teste SINTÉTICO (requer .env.pricing_v2_test local e psql no PATH/PSQL_BIN):
 powershell -File scripts/db_v2_create_test.ps1   # cria/recria banco+role de teste
-powershell -File scripts/db_v2_apply.ps1 -WithSeed  # aplica DDL + seed, fail-fast
+powershell -File scripts/db_v2_apply.ps1 -WithSeed  # aplica DDL (001-008) + seed, fail-fast
 powershell -File scripts/db_v2_verify.ps1        # compara banco real x expected.json (inclui hash)
-powershell -File scripts/db_v2_drop_test.ps1     # remove o banco de teste (NÃO executar sem necessidade — ver risco 5)
+powershell -File scripts/db_v2_drop_test.ps1     # remove o banco de teste (NÃO executar sem necessidade)
+
+# teste público sintético do pipeline de ingestão (contra qualquer banco "_test"):
+python scripts/test_ingest_xlsx_postgres.py --env-file .env.pricing_v2_test
+
+# ingestão real (NUNCA rodar contra o banco "_test" — só contra o banco privado dedicado):
+python scripts/ingest_xlsx_postgres.py ingest-raw --input <arquivo.xlsx> --dry-run
+python scripts/ingest_xlsx_postgres.py stage --mapping <mapeamento.json privado>
 ```
 
 ## Próximo passo recomendado
 
-**Fase 3 — Ingestão controlada das planilhas para staging.** Com o
-schema v2 provado (conceitual, sintético, e agora real em
-PostgreSQL), o próximo passo natural é desenhar (não necessariamente
-implementar ainda com dado real) a camada `staging` que vai receber
-as planilhas reais de Rodolfo de forma controlada e auditável —
-respeitando D4/D6 (nada de dado real fora de `data/restricted/` ou de
-um banco que não seja tratado como restrito) e as perguntas ainda
-pendentes em `questions-for-rodolfo.md`. Antes disso, considerar levar
-essas perguntas ao responsável do projeto — várias decisões de
-ingestão dependem das respostas.
+**Fase 3B — Mapeamento staging → core/pricing.** Com `raw`/`staging`
+povoados de verdade a partir das duas planilhas reais, o próximo
+passo natural é decidir e implementar a promoção controlada dos
+candidatos `CANDIDATE` (confiança `HIGH`, já em `staging.*`) para as
+tabelas de domínio (`core.developments/towers/units`,
+`pricing.parameters/calibration_entries/...`) — respeitando D4/D6/D7/
+D8/D10, sem tocar nos registros `MEDIUM`/`LOW` ainda em revisão, e
+sem calcular nenhum preço real ainda (isso continua sendo escopo de
+uma fase posterior, dependente das respostas de Rodolfo). Antes de
+iniciar, revisar `data/restricted/audit/ingestion-validation.md` e
+`questions-for-rodolfo.md` — várias decisões de promoção dependem de
+perguntas ainda sem resposta.
 
 ## Regra para quem continuar este trabalho
 

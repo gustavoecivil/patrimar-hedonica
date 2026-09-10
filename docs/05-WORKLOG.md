@@ -6,6 +6,103 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 3A: Ingestão controlada das planilhas reais em RAW/STAGING PostgreSQL (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** carregar, por primeira vez, as duas planilhas reais de
+Rodolfo (recebidas na Fase 1A/1A.1, auditadas na Fase 1B, com lógica
+reconstruída na Fase 1C) para um banco PostgreSQL — **local e
+privado, separado do banco sintético de teste** (ver [[04-DECISIONS]]
+D10). Destino exclusivo: schemas genéricos `raw`/`staging`. Nenhuma
+linha inserida em `core`/`pricing`/`market`; nenhum preço calculado
+ou reproduzido; nenhuma constraint definitiva criada em `core`.
+
+**Ambiente:** banco novo `patrimar_pricing_v2_private_dev` (mesmo
+PostgreSQL 18.4 local já usado na Fase 2C), role dedicada, senha
+gerada localmente nesta sessão (nunca reutilizada, nunca impressa em
+nenhum log/relatório), credenciais só em
+`.env.pricing_v2_private_dev` (local, `.gitignore`). DDL 001-008
+aplicado do zero — banco iniciado sem nenhum dado sintético (a seed
+de demonstração da Fase 2B NÃO foi aplicada aqui).
+
+**Resultado agregado (números apenas, sem conteúdo):**
+
+| Item | Resultado |
+|---|---|
+| Workbooks/abas ingeridos | 2 / 8 |
+| Células/fórmulas ingeridas | 25.023 / 18.377 — **reconciliação exata** com o inventário estrutural da Fase 1B |
+| Reingestão do mesmo arquivo (2×, incluindo verificação final dedicada) | `ALREADY_INGESTED`, 0 linhas novas em ambas as tentativas |
+| Amostragem determinística de fidelidade | 263 células verificadas, 0 divergências |
+| Entradas no mapeamento de campos | 27 (14 `HIGH`, 11 `MEDIUM`, 2 `LOW`) |
+| Candidatos de staging populados (a partir de `HIGH` apenas) | 884 unidade + 884 resultado de preço + 8 parâmetro + 31 calibração |
+| Registros em revisão (`MEDIUM`/`LOW`, nunca convertidos automaticamente) | 13 (2 `UNMAPPED`, 11 `REVIEW_REQUIRED`) |
+| Linhas de staging órfãs (sem linhagem até `raw.*`) | 0 |
+| Avaliação de chave candidata | confirma, com evidência real, que um identificador de negócio isolado não é suficiente como chave num dos dois workbooks (precisa de chave composta); no outro workbook, é suficiente isoladamente — consistente com a decisão de schema já tomada na Fase 2 |
+| Reconciliação entre os dois workbooks | estrutura e conteúdo (não nome/data) apontam para desenvolvimentos distintos usando a mesma metodologia — confiança média-alta, registrada privadamente |
+
+**Bug real encontrado e corrigido durante a extração para staging**
+(só detectável executando contra dado real): uma coluna de
+identificador de unidade, aparentemente digitada manualmente, é na
+maior parte das linhas uma **fórmula de incremento sequencial** — só
+a primeira linha de cada sequência é valor literal. A extração
+inicial só lia `raw_value` (NULL para a maioria dessas células) e
+capturou apenas ~8% dos registros esperados. Corrigido usando
+`COALESCE(raw_value, cached_value)` na extração para staging — a
+fórmula em si continua preservada, intacta, em `raw.cells`. Corrigido
+também: ambiguidade `""` vs. `NULL` na geração de SQL a partir de
+CSV do `psql` (afetava colunas numéricas/texto vindas de
+`fetch_sheet_rows`); coluna de linhagem ausente em
+`staging.calibration_candidates` (adicionada, DDL reaplicado do
+zero); corrupção de acentuação ao passar SQL via argumento de linha
+de comando no Windows — corrigido escrevendo a consulta em arquivo
+UTF-8 e usando `psql -f` em vez de `-c`.
+
+**Ferramentas criadas:** `scripts/ingest_xlsx_postgres.py`
+(subcomandos `ingest-raw`/`stage`; reaproveita `audit_xlsx.py`; sem
+nome privado hardcoded; conexão só via variável de ambiente padrão do
+libpq); `scripts/test_ingest_xlsx_postgres.py` (teste público de
+integração contra PostgreSQL real, usando exclusivamente um workbook
+`.xlsx` fabricado em memória — cobre ingestão, idempotência,
+mapeamento `HIGH`/`MEDIUM`/`LOW`, lineage, e reversão de transação
+com marcação `FAILED`). `scripts/db_v2_apply.ps1` atualizado para
+incluir `008_ingestion.sql` na ordem de aplicação padrão.
+
+**Artefatos privados criados** (todos em `data/restricted/`, nunca
+versionados): `staging/source-to-canonical-mapping.json`,
+`staging/_gen_mapping.py`, `audit/staging-profile.csv`,
+`audit/ingestion-validation.md`. `.env.pricing_v2_private_dev` (local,
+credencial gerada nesta sessão).
+
+**Documentação pública criada/atualizada:**
+[[14-PRIVATE-DATA-INGESTION]] (novo); [[04-DECISIONS]] (D10, nova);
+[[03-ROADMAP]], [[07-DATA-DICTIONARY]] (referências sanitizadas).
+
+**Verificação de segurança:** nenhuma senha versionada; nenhum
+`.env` rastreado; `data/restricted/` confirmado não rastreado
+(`git status`/`git ls-files`); busca textual nos artefatos novos
+contra nomes/hashes privados conhecidos das fases 1B/1C — nenhuma
+ocorrência.
+
+**Testes:** `scripts/test_ingest_xlsx_postgres.py` (19 verificações,
+contra PostgreSQL real) — **PASSOU**; `validate_db_v2.py` (8 arquivos
+de DDL + seed sintético) — **PASSOU**; `test_validate_db_v2.py`,
+`test_reference_allocation_engine.py` (21/21) — **PASSOU**;
+`verify_postgres_v2.py` contra `patrimar_pricing_v2_test` — **PASSOU**
+(banco de teste sintético da Fase 2C confirmado intacto, hash lógico
+idêntico); `npm run test:model` — **PASSOU**. `database/schema.sql`,
+`index.html`, `netlify/functions/hedonic-data.mts` e as migrations
+Netlify existentes confirmados sem alteração.
+
+**Estado final:** dois bancos PostgreSQL locais ativos —
+`patrimar_pricing_v2_test` (sintético, Fase 2C, intacto) e
+`patrimar_pricing_v2_private_dev` (privado, Fase 3A, com as duas
+planilhas reais em `raw`/`staging`, zero linhas em
+`core`/`pricing`/`market`).
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 2C: Execução real do schema v2 em PostgreSQL isolado (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

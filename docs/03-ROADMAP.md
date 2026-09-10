@@ -2,6 +2,33 @@
 
 ## Fase atual
 
+**FASE 3A — Ingestão controlada das planilhas reais em RAW/STAGING
+PostgreSQL.**
+Executada em 2026-09-09 (ver [[05-WORKLOG]] e
+[[14-PRIVATE-DATA-INGESTION]]). As duas planilhas reais recebidas na
+Fase 1A/1A.1 foram, pela primeira vez, carregadas para um banco de
+dados — um PostgreSQL **local e privado** dedicado
+(`patrimar_pricing_v2_private_dev`, totalmente separado do banco de
+teste sintético — ver [[04-DECISIONS]] D10), preservando fidelidade
+total (valor, fórmula, tipo original, separados) em dois schemas
+genéricos (`raw`/`staging`, `database/v2/008_ingestion.sql`), sem
+inserir nenhuma linha em `core`/`pricing`/`market`. Reconciliação
+estrutural exata contra a auditoria da Fase 1B; amostragem
+determinística de fidelidade sem divergência; idempotência por
+SHA-256 confirmada (reingestão do mesmo arquivo não duplica nada);
+mapeamento de campos classificado por confiança (`HIGH` convertido
+automaticamente para candidato de staging, `MEDIUM`/`LOW` só entram
+em revisão, nunca convertidos automaticamente); avaliação de chave
+candidata com evidência real; comparação estrutural entre os dois
+workbooks. Teste público sintético
+(`scripts/test_ingest_xlsx_postgres.py`) prova o pipeline completo —
+incluindo reversão de transação e marcação `FAILED` — usando somente
+um workbook fabricado em memória. Nenhum preço foi calculado ou
+reproduzido; nenhuma constraint definitiva foi criada em `core`;
+nenhum conteúdo privado apareceu em nenhum artefato público. Banco de
+teste sintético (`patrimar_pricing_v2_test`, Fase 2C) confirmado
+intacto ao final.
+
 **FASE 2C — Execução real do schema v2 em PostgreSQL isolado.**
 Executada em 2026-09-09 (ver [[05-WORKLOG]] e
 [[13-POSTGRESQL-V2-RUNTIME-VALIDATION]]). O schema v2 (Fase 2) e o
@@ -128,12 +155,13 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    estrutural (Fase 1B), engenharia reversa da lógica de precificação
    (Fase 1C), gap analysis/modelo canônico preliminar (Fase 1D),
    desenho do schema PostgreSQL v2 (Fase 2), prova end-to-end com
-   dados sintéticos (Fase 2B) e execução real em PostgreSQL isolado
-   (Fase 2C) concluídos. Falta a Fase 3 (ingestão controlada das
-   planilhas reais para staging, ainda não feita) e a validação das
-   perguntas pendentes registradas privadamente para quem forneceu a
-   planilha original — duas delas bloqueavam decisão de schema e
-   foram resolvidas modelando para a incerteza (ver
+   dados sintéticos (Fase 2B), execução real em PostgreSQL isolado
+   (Fase 2C) e ingestão controlada das duas planilhas reais para
+   RAW/STAGING num banco privado dedicado (Fase 3A) concluídos. Falta
+   a Fase 3B (mapeamento staging → core/pricing, ainda não feita) e a
+   validação das perguntas pendentes registradas privadamente para
+   quem forneceu a planilha original — duas delas bloqueavam decisão
+   de schema e foram resolvidas modelando para a incerteza (ver
    [[11-DATABASE-V2-DESIGN]]); as demais continuam pendentes, ver
    `data/restricted/audit/questions-for-rodolfo.md`.
 2. **Dicionário de dados** — formalizar e expandir
@@ -142,9 +170,11 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
 3. **RAW / STAGING / CORE** — camadas de dados para ingestão bruta,
    tratamento e modelo de domínio limpo, substituindo o CSV sintético
    único atual. **Status:** `core` já existe como schema físico desde
-   a Fase 2 (`database/v2/002_core.sql`); `raw`/`staging` continuam
-   documentadas como plano futuro, sem tabela física — ver
-   [[11-DATABASE-V2-DESIGN]].
+   a Fase 2 (`database/v2/002_core.sql`); `raw`/`staging` também já
+   existem como schema físico desde a Fase 3A
+   (`database/v2/008_ingestion.sql`) e já receberam as duas planilhas
+   reais num banco privado dedicado — ver [[14-PRIVATE-DATA-INGESTION]].
+   Falta a promoção de `staging` para `core`/`pricing` (Fase 3B).
 4. **PostgreSQL/PostGIS** — evoluir o schema atual (`database/schema.sql`)
    para suportar dados geoespaciais reais (hoje `developments` já tem
    `latitude`/`longitude` como `NUMERIC`, mas não há extensão PostGIS

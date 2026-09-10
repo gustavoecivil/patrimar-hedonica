@@ -21,6 +21,14 @@
 > fins de prova de conceito — **não é dado real da Patrimar nem
 > substitui este dicionário**, que continua descrevendo apenas o
 > laboratório hedônico legado.
+>
+> **Nota (Fase 3A):** os schemas físicos genéricos `raw`/`staging`
+> (`database/v2/008_ingestion.sql`) já existem e já receberam as duas
+> planilhas reais de Rodolfo, mas seus campos também não estão
+> listados abaixo — o DDL é deliberadamente genérico (workbook/aba/
+> célula, candidato normalizado com nível de confiança), e qualquer
+> nome de campo real correspondente só existe como linha de um banco
+> privado, nunca como coluna de schema. Ver [[14-PRIVATE-DATA-INGESTION]].
 
 Somente campos comprovadamente existentes no repositório em 2026-09-09.
 Três representações coexistem hoje: o CSV de seed, o schema relacional

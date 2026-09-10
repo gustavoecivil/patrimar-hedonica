@@ -163,3 +163,34 @@ testes vivem apenas em arquivos locais cobertos por `.gitignore`
 (`.env.*`), nunca commitadas. O banco de teste criado nesta fase
 permanece ativo entre sessões até uma decisão explícita de removê-lo
 — ver [[99-HANDOFF]].
+
+### D10 — Ingestão de dado privado real vive num banco PostgreSQL separado, nunca junto do banco sintético de teste
+
+**Data:** 2026-09-09
+**Decisão:** A Fase 3A criou um banco PostgreSQL adicional,
+`patrimar_pricing_v2_private_dev`, exclusivamente para receber a
+ingestão `raw`/`staging` das duas planilhas reais de Rodolfo. Esse
+banco é **totalmente separado** de `patrimar_pricing_v2_test` (D9,
+Fase 2C) — nenhum dado real jamais entra no banco de teste sintético,
+e nenhum dado sintético de teste precisa ser removido ou misturado
+para acomodar dado real. A senha desse banco foi gerada localmente
+nesta sessão, nunca reutilizada de nenhuma credencial existente, e
+nunca impressa em nenhum relatório ou log — vive apenas em
+`.env.pricing_v2_private_dev` (local, `.gitignore`, nunca commitado).
+O DDL genérico (`database/v2/008_ingestion.sql`) que cria os schemas
+`raw`/`staging` é idêntico nos dois bancos; o que os diferencia são as
+**linhas**, nunca o schema.
+**Motivo:** misturar dado real e dado sintético no mesmo banco
+tornaria qualquer verificação futura contra o banco de teste (ex.:
+`verify_postgres_v2.py`) ambígua sobre se um resultado depende de
+dado real ou sintético, e aumentaria o risco de dado privado vazar
+para um artefato pensado como sintético/público (dump, backup,
+captura de tela). Separar fisicamente os bancos elimina essa
+ambiguidade por construção.
+**Como aplicar:** nenhum script deste projeto deve aplicar dado real
+contra um banco cujo nome não sinalize explicitamente essa natureza
+(`_private_dev` ou equivalente revisado explicitamente); nenhum dump,
+export ou backup desse banco pode ser salvo fora de
+`data/restricted/` ou de um caminho fora do repositório. Antes de
+qualquer promoção futura de `staging` para `core`/`pricing` (Fase 3B),
+confirmar novamente qual banco está sendo usado como origem.
