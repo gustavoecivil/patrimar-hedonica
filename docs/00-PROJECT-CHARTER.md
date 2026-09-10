@@ -16,14 +16,29 @@ página única (`index.html`) que gera uma base sintética/híbrida de 626
 unidades em 12 empreendimentos fictícios, estima um modelo hedônico OLS
 inteiramente no navegador (JavaScript, sem backend), e opcionalmente carrega
 dados reais de um banco PostgreSQL (Netlify DB) via uma Netlify Function
-(`GET /api/hedonic-data`).
+(`GET /api/hedonic-data`). Esse laboratório foi preservado — nunca apagado
+— em `legacy/lab/` a partir da Fase 3E (ver [[04-DECISIONS]] D15).
 
-**Direção declarada:** este laboratório é o ponto de partida técnico —
-não o produto final. O objetivo é evoluir para uma arquitetura com dados
-reais da Patrimar, staging/core de dados, modelos concorrentes avaliados
-entre si, um motor de preços, um simulador comercial e um painel de
-acompanhamento. Essa evolução é tratada como **hipótese/plano futuro** e
-está detalhada, sem implementação, em [[03-ROADMAP]].
+**Estado atual do produto (Fase 3E, 2026-09-10):** o laboratório deixou
+de ser a interface principal. O produto oficial é o **Patrimar Pricing
+Intelligence** (`web/pricing-intelligence/`), com dois modos de dado —
+**PRIVATE** (dado real, execução local apenas) e **DEMO** (100%
+sintético, único modo do deploy público no GitHub `main`/Netlify) — ver
+[[04-DECISIONS]] D14 e [[18-PRICING-INTELLIGENCE-MVP]]. O Unit Price
+Allocation Engine (Motor B, D7) já foi reproduzido matematicamente com
+884/884 unidades reais dentro de 1 centavo (Fase 3D,
+`NEAR_EXACT_WITH_EXPLAINED_ROUNDING`) e essa validação é a base do que
+o produto mostra na página Validação (em modo PRIVATE, com o dado
+real; em modo DEMO, com equivalente sintético).
+
+**Direção declarada:** o Market Pricing Engine (Motor A, D7) ainda não
+tem nenhuma fonte de dado real — a página "Inteligência de Mercado" do
+produto mostra apenas a arquitetura conceitual futura, rotulada
+"PRÓXIMA EVOLUÇÃO". O objetivo segue evoluindo para uma arquitetura
+com dados reais da Patrimar, modelos concorrentes avaliados entre si,
+um simulador comercial completo e um painel de acompanhamento. Essa
+evolução é tratada como **hipótese/plano futuro** e está detalhada,
+sem implementação, em [[03-ROADMAP]].
 
 **Decisão arquitetural (Fase 1D, ver [[04-DECISIONS]] D7):** "motor de
 preços" acima se desdobra em dois motores conceituais separados e

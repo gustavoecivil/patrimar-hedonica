@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrimar · Pricing Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="hburger" onclick="toggleSidebar()" aria-label="Abrir menu">☰</button>
+  <div class="tb-title">PATRIMAR · Pricing Intelligence</div>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar(false)"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <img src="assets/logo-grupo-patrimar-branca.png" alt="Grupo Patrimar" width="132" height="52">
+    <div class="wordmark">PATRIMAR <span class="gold">PRICING INTELLIGENCE</span></div>
+    <div class="sidebar-sub">Plataforma de Inteligência e Governança de Precificação</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" data-view="visao-geral" onclick="switchView('visao-geral', this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      Visão Geral
+    </div>
+    <div class="nav-item" data-view="unidades" onclick="switchView('unidades', this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Unidades
+    </div>
+    <div class="nav-item" data-view="precificacao" onclick="switchView('precificacao', this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Precificação
+    </div>
+    <div class="nav-item" data-view="validacao" onclick="switchView('validacao', this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Validação
+    </div>
+    <div class="nav-item" data-view="auditoria" onclick="switchView('auditoria', this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Auditoria
+    </div>
+    <div class="nav-section">Evolução</div>
+    <div class="nav-item" data-view="mercado" onclick="switchView('mercado', this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8 12 14.7 8.5 11.2 3 16.7"/></svg>
+      Inteligência de Mercado
+      <span class="soon">EM BREVE</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="footer-brand">Patrimar Engenharia</div>
+    Governança e inteligência de precificação
+    <div class="data-mode-switch">
+      <button class="mode-btn active" data-mode="DEMO" onclick="setDataMode('DEMO')">DEMO</button>
+      <button class="mode-btn" id="private-mode-item" data-mode="PRIVATE" onclick="setDataMode('PRIVATE')" style="display:none">PRIVATE</button>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      Alternar tema
+    </button>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- ═══════════════ VISÃO GERAL ═══════════════ -->
+  <section class="panel" id="view-visao-geral">
+    <div class="demo-banner" id="demo-banner" style="display:none">
+      🔶 Modo DEMONSTRAÇÃO — todos os dados nesta tela são 100% sintéticos, gerados apenas para ilustrar a interface.
+    </div>
+    <div class="page-header">
+      <div>
+        <div class="page-title">Visão Geral</div>
+        <div class="page-subtitle">Panorama executivo da precificação do empreendimento selecionado.</div>
+      </div>
+    </div>
+
+    <div class="cards-grid" id="kpi-cards"></div>
+
+    <div class="panel-card" style="border-left:4px solid var(--good)">
+      <h3>✓ Metodologia reproduzida — 100% a centavo</h3>
+      <div class="desc" style="margin-bottom:0">A lógica de distribuição de preços foi reconstruída e validada independentemente, fora da planilha original — sem depender do resultado já conhecido durante o cálculo. Ver a página <b>Validação</b> para o detalhe executivo.</div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="panel-card"><h3>Preço/m² por pavimento</h3><div class="chart-box"><canvas id="chart-floor"></canvas></div></div>
+      <div class="panel-card"><h3>Preço × área privativa</h3><div class="chart-box"><canvas id="chart-scatter"></canvas></div></div>
+      <div class="panel-card"><h3>Participação por torre</h3><div class="chart-box"><canvas id="chart-tower"></canvas></div></div>
+      <div class="panel-card"><h3>Distribuição de preços</h3><div class="chart-box"><canvas id="chart-dist"></canvas></div></div>
+      <div class="panel-card"><h3>Ajustes humanos</h3><div class="desc">Preço sistemático vs. ajuste comercial, por unidade ajustada.</div><div class="chart-box"><canvas id="chart-adjust"></canvas></div></div>
+      <div class="panel-card"><h3>Referência × Reprodução</h3><div class="desc">Amostra de unidades — preço já existente vs. recalculado de forma independente.</div><div class="chart-box"><canvas id="chart-refrepro"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ UNIDADES ═══════════════ -->
+  <section class="panel" id="view-unidades" style="display:none">
+    <div class="page-header">
+      <div><div class="page-title">Unidades</div><div class="page-subtitle">Tabela completa de unidades, com precificação e status de validação.</div></div>
+    </div>
+    <div class="table-toolbar">
+      <input type="text" id="units-search" class="table-search" placeholder="Buscar por torre, unidade ou tipologia…">
+      <select id="units-status-filter" class="table-select">
+        <option value="TODOS">Todos os status</option>
+        <option value="VALIDADO">Validado</option>
+        <option value="AJUSTE">Ajuste</option>
+        <option value="REVISAO">Revisão</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr>
+          <th class="sort-th" data-key="tower">Empreend./Torre</th>
+          <th class="sort-th" data-key="unit_code">Unidade</th>
+          <th class="sort-th" data-key="typology">Tipologia</th>
+          <th class="sort-th" data-key="private_area_m2">Área</th>
+          <th class="sort-th" data-key="uncovered_area_m2">Área descoberta</th>
+          <th class="sort-th" data-key="floor">Pavimento</th>
+          <th class="sort-th" data-key="position">Posição</th>
+          <th class="sort-th" data-key="price_per_m2">Preço/m²</th>
+          <th class="sort-th" data-key="final_price">Preço</th>
+          <th class="sort-th" data-key="adjustment">Ajuste</th>
+          <th class="sort-th" data-key="status">Status</th>
+        </tr></thead>
+        <tbody id="units-tbody"></tbody>
+      </table>
+    </div>
+    <div class="table-pager" id="units-pager"><div class="pager-info"></div><div class="pages"></div></div>
+  </section>
+
+  <!-- ═══════════════ PRECIFICAÇÃO ═══════════════ -->
+  <section class="panel" id="view-precificacao" style="display:none">
+    <div class="page-header"><div><div class="page-title">Precificação</div><div class="page-subtitle">Como o preço de uma unidade é formado — visão empresarial, sem expor a fórmula proprietária.</div></div></div>
+
+    <div class="panel-card">
+      <h3>Como o preço foi formado</h3>
+      <div class="desc">Fluxo conceitual aplicado a cada unidade.</div>
+      <div class="flow">
+        <div class="flow-step">Características da unidade</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">Parâmetros e calibrações do empreendimento</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">Pesos relativos (pavimento, posição)</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">Participação da unidade no total</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">Preço calculado</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step optional"><span class="tag">Opcional</span>Ajuste comercial</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="border-left-color:var(--good)">Preço final</div>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <h3>Calibração por empreendimento</h3>
+      <div class="desc">Os pesos de pavimento e posição são calibrados individualmente para cada empreendimento — não existe uma fórmula universal fixa entre empreendimentos diferentes. Nesta versão, a calibração é somente leitura.</div>
+      <div class="kv-grid">
+        <div class="kv-item"><div class="k">Torres calibradas</div><div class="v" id="prec-towers">—</div></div>
+        <div class="kv-item"><div class="k">Tipologias</div><div class="v" id="prec-typologies">—</div></div>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <h3>Ajuste humano / comercial</h3>
+      <div class="desc">Ajuste opcional aplicado por decisão comercial sobre o preço calculado. Nesta versão, somente leitura — campos de motivo, responsável e data serão adicionados numa evolução futura.</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ VALIDAÇÃO ═══════════════ -->
+  <section class="panel" id="view-validacao" style="display:none">
+    <div class="page-header"><div><div class="page-title">Validação</div><div class="page-subtitle">Preço de referência (já existente) comparado ao preço reproduzido de forma independente.</div></div></div>
+    <div class="cards-grid" id="validation-cards"></div>
+    <div class="panel-card">
+      <h3>Referência × Reprodução</h3>
+      <div class="desc">Ver o gráfico comparativo completo na página <b>Visão Geral</b>.</div>
+      <p class="desc" id="validation-note" style="margin-top:8px"></p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ AUDITORIA ═══════════════ -->
+  <section class="panel" id="view-auditoria" style="display:none">
+    <div class="page-header"><div><div class="page-title">Auditoria</div><div class="page-subtitle">Rastreabilidade completa, da fonte de dado até o preço final.</div></div></div>
+    <div class="panel-card" id="audit-summary"></div>
+    <div class="panel-card">
+      <h3>Cadeia de rastreabilidade</h3>
+      <div class="flow">
+        <div class="flow-step">Fonte de origem</div><div class="flow-arrow">↓</div>
+        <div class="flow-step">Execução / Cenário</div><div class="flow-arrow">↓</div>
+        <div class="flow-step">Parâmetros</div><div class="flow-arrow">↓</div>
+        <div class="flow-step">Calibrações</div><div class="flow-arrow">↓</div>
+        <div class="flow-step">Preço sistemático</div><div class="flow-arrow">↓</div>
+        <div class="flow-step optional"><span class="tag">Quando houver</span>Ajuste humano</div><div class="flow-arrow">↓</div>
+        <div class="flow-step" style="border-left-color:var(--good)">Preço final</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ INTELIGÊNCIA DE MERCADO ═══════════════ -->
+  <section class="panel" id="view-mercado" style="display:none">
+    <div class="page-header"><div><div class="page-title">Inteligência de Mercado</div><div class="page-subtitle">Próxima evolução da plataforma — estimativa de valor de mercado (Motor A).</div></div></div>
+    <div class="panel-card" style="border-left:4px solid var(--gold)">
+      <h3>🔶 Próxima evolução</h3>
+      <div class="desc" style="margin-bottom:0">O motor de precificação de mercado ainda não está operacional. A plataforma já está preparada estruturalmente para recebê-lo.</div>
+    </div>
+    <div class="panel-card">
+      <h3>Arquitetura conceitual</h3>
+      <div class="market-diagram">
+        <div class="market-node">Dados de mercado</div>
+        <div class="market-node">Concorrentes</div>
+        <div class="market-node">Localização</div>
+        <div class="market-node">Geodados</div>
+        <div class="market-node">Indicadores econômicos</div>
+        <div class="market-node">Histórico comercial</div>
+      </div>
+      <div class="market-arrow-down">↓</div>
+      <div class="market-diagram"><div class="market-node active">Modelo hedônico</div></div>
+      <div class="market-arrow-down">↓</div>
+      <div class="market-diagram"><div class="market-node active">VGV / preço-base recomendado</div></div>
+      <div class="market-arrow-down">↓</div>
+      <div class="market-diagram"><div class="market-node active">Motor de distribuição (validado nesta plataforma)</div></div>
+      <div class="market-arrow-down">↓</div>
+      <div class="market-diagram"><div class="market-node active">Tabela de preços</div></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════ DRAWER — DETALHE DA UNIDADE ═══════════════ -->
+<div class="drawer-overlay" id="unit-drawer-overlay">
+  <div class="drawer">
+    <button class="drawer-close" onclick="closeUnitDrawer()" aria-label="Fechar">×</button>
+    <h2 id="drawer-title">Unidade</h2>
+    <div class="sub" id="drawer-sub"></div>
+    <div style="margin-bottom:14px" id="drawer-status"></div>
+
+    <div class="drawer-section">
+      <h4>Características</h4>
+      <div class="kv-grid" id="drawer-kv"></div>
+    </div>
+
+    <div class="drawer-section">
+      <h4>Precificação</h4>
+      <div class="price-formula" id="drawer-price"></div>
+    </div>
+  </div>
+</div>
+
+<script src="data-provider.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

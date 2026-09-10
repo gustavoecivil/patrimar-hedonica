@@ -6,87 +6,60 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
 
 ## Ordem de leitura recomendada
 
-1. [[00-PROJECT-CHARTER]] — por que este projeto existe.
-2. [[01-CURRENT-STATE]] — o que de fato existe hoje, comprovado.
-3. [[02-ARCHITECTURE]] — como as peças se conectam hoje.
+1. [[00-PROJECT-CHARTER]] — por que este projeto existe, e o que o
+   produto é hoje.
+2. [[01-CURRENT-STATE]] — o que de fato existia antes da Fase 3E
+   (ainda válido para o laboratório legado, agora em `legacy/lab/`).
+3. [[02-ARCHITECTURE]] — como as peças se conectam (laboratório
+   legado — ver [[18-PRICING-INTELLIGENCE-MVP]] para a arquitetura do
+   produto novo).
 4. [[03-ROADMAP]] — o que vem depois (ainda não implementado).
 5. [[04-DECISIONS]] — regras que não devem ser quebradas sem registro
    (D7 dois motores; D8 referência sintética não é metodologia
-   oficial; D9 testes de banco real isolados sem alterar servidor;
-   D10 banco privado de ingestão separado do banco sintético; D11
-   resultado importado nunca confundido com resultado calculado; D12
-   lógica real é configuração privada; D13 evidência classificada +
-   prova estrutural antes de comparar contra o preço de referência).
-6. [[08-SPREADSHEET-AUDIT-METHOD]], [[09-PRICING-LOGIC-REVERSE-ENGINEERING]],
-   [[10-PRICING-DOMAIN-MODEL]], [[11-DATABASE-V2-DESIGN]],
-   [[12-REFERENCE-ALLOCATION-ENGINE]] — metodologia/modelo das fases
-   anteriores, sem conteúdo privado.
-7. [[13-POSTGRESQL-V2-RUNTIME-VALIDATION]] — execução real contra
-   PostgreSQL, os dois defeitos encontrados e corrigidos (Fase 2C).
-8. [[14-PRIVATE-DATA-INGESTION]] — ingestão controlada RAW/STAGING das
-   planilhas reais (Fase 3A).
-9. [[15-STAGING-TO-CANONICAL-PROMOTION]] — promoção controlada de
-   staging para core/pricing (Fase 3B).
-10. [[16-INDEPENDENT-PRICING-REPRODUCTION]] — tentativa de reprodução
-    independente da lógica de precificação real (Fase 3C,
-    `PARTIAL_REPRODUCTION`).
-11. [[17-AMBIGUITY-RESOLUTION-METHOD]] — fechamento forense das
-    ambiguidades que bloqueavam a Fase 3C (Fase 3D,
-    `NEAR_EXACT_WITH_EXPLAINED_ROUNDING`).
-12. Este documento (99-HANDOFF) — estado exato da última execução.
+   oficial; D9–D11 isolamento de bancos e distinção importado/
+   calculado; D12 lógica real é configuração privada; D13 evidência
+   classificada + prova estrutural; **D14 produto público é sempre
+   DEMO, dado real só em PRIVATE local; D15 laboratório legado
+   preservado, não apagado**).
+6. [[08-SPREADSHEET-AUDIT-METHOD]] … [[17-AMBIGUITY-RESOLUTION-METHOD]]
+   — metodologia/modelo das fases 1–3D, sem conteúdo privado.
+7. [[18-PRICING-INTELLIGENCE-MVP]] — o produto oficial (Fase 3E): o
+   que ele é, as 6 páginas, os dois modos de dado.
+8. [[19-DEPLOYMENT-AND-DEMO-MODE]] — como rodar PRIVATE local, como o
+   deploy DEMO funciona, o scanner de privacidade.
+9. Este documento (99-HANDOFF) — estado exato da última execução.
 
-## Estado atual (2026-09-10, Fase 3D)
+## Estado atual (2026-09-10, Fase 3E)
 
-- **Branch de trabalho:** `rebuild/pricing-intelligence`, rastreando
-  `origin/rebuild/pricing-intelligence`. `main` intocada em `7dd1d24`.
-- **A reprodução independente que a Fase 3C deixou bloqueada
-  (884/884 unidades) foi desbloqueada nesta fase.** Resultado:
-  **884/884 unidades reproduzidas de forma independente, dentro de 1
-  centavo do preço já existente na fonte** — classificação
-  `NEAR_EXACT_WITH_EXPLAINED_ROUNDING`. `MATHEMATICAL_REPRODUCTION_CONFIRMED
-  = true`. `BUSINESS_SEMANTICS_CONFIRMED` permanece **parcial** — ver
-  risco 6 abaixo.
-- **Um dos dois bloqueios centrais da Fase 3C era um defeito de
-  software, não uma ambiguidade de negócio**: a função que lia
-  células de `raw.cells` por linha filtrava só pelo arquivo
-  (`workbook_id`), não pela aba específica (`sheet_id`) — como abas
-  diferentes do mesmo arquivo reaproveitam as mesmas letras de coluna
-  para conteúdo totalmente diferente, a consulta misturava dado de
-  abas distintas sob o mesmo número de linha. Corrigido em
-  `scripts/run_pricing_reproduction.py`
-  (`fetch_raw_columns_by_row` agora recebe `sheet_id`, nunca
-  `workbook_id`). Isso também corrigiu, de quebra, a contagem de
-  overrides (147 unidades corretas, não 188 como a Fase 3C havia
-  reportado).
-- **O outro bloqueio (tabela de calibração de posição nunca
-  capturada) foi resolvido por engenharia reversa da fórmula real**:
-  a fórmula usa uma busca horizontal com chave composta (2 campos já
-  disponíveis) contra uma tabela cujo índice de linha é uma fórmula
-  auto-documentada (`ROWS(...)` do próprio range) que sempre resolve
-  para a última linha — nunca ambígua. A tabela foi reconstruída por
-  **parsing genérico da fórmula real** (nova função pública,
-  `fetch_composite_lookup_table_from_formula` — nenhuma
-  fórmula/constante real hardcoded em código público).
-- **Toda descoberta foi comprovada por evidência estrutural interna
-  ANTES de qualquer comparação com o preço de referência** — nunca
-  ajustada olhando o resultado final. Ver [[04-DECISIONS]] D13 e
-  `data/restricted/audit/reproduction-change-log.md` para o histórico
-  completo (issue/evidência/mudança/métrica antes-depois de cada
-  achado).
-- **Extensão genérica do motor público**
-  (`scripts/pricing_reproduction_engine.py`): busca por chave
-  composta (`lookup_table_composite`) e valor default explicitamente
-  evidenciado para uma chave ausente específica
-  (`missing_key_defaults`) — ambas testadas só com dados 100%
-  fictícios (14/14 verificações).
-- **Nova versão do ruleset privado** (`reproduction_rules_v2`, versão-
-  mãe declarada) — a v1 da Fase 3C (com suas 3 sub-tentativas)
-  permanece intacta no banco privado como histórico, nunca
-  sobrescrita.
-- **Banco de teste sintético (`patrimar_pricing_v2_test`, Fase 2C)
-  confirmado intacto** ao final desta fase.
-- `npm run test:model` re-executado: **PASSOU**, mesmo resultado das
-  fases anteriores.
+- **Produto oficial:** Patrimar Pricing Intelligence
+  (`web/pricing-intelligence/`) substituiu o laboratório hedônico
+  legado como interface principal do repositório e do deploy
+  público. O laboratório continua existindo, preservado, em
+  `legacy/lab/` (D15) — não é mais a página inicial.
+- **Dois modos de dado, nunca misturados (D14):** PRIVATE (dado real,
+  só `localhost`/`127.0.0.1`, via `scripts/pricing_preview_server.py`)
+  e DEMO (100% sintético, único modo do GitHub `main`/Netlify, via
+  `web/pricing-intelligence/demo-data.json`).
+- **PRIVATE testado end-to-end contra o banco real:** 884 unidades,
+  VGV real, 100% de precisão de reprodução (884/884 dentro de 1
+  centavo) — mesmo resultado já confirmado na Fase 3D, agora também
+  visível na interface do produto (não só em script/CSV de auditoria).
+- **`netlify.toml` (novo, raiz do repo)** aponta a publicação do site
+  Netlify já existente (`imaginative-fudge-64c0aa`) para
+  `web/pricing-intelligence` — nenhum site novo foi criado, nenhuma
+  configuração do site foi alterada via API, só o diretório de
+  publicação via arquivo versionado.
+- **`scripts/scan_deploy_privacy.py` (novo)** bloqueia deploy se
+  encontrar qualquer indício estrutural de dado privado no diretório
+  publicado — rodado com sucesso (`OK`) antes da promoção a `main`.
+- **Recovery tag desta fase:** `pre-pricing-intelligence-mvp-20260910`
+  → `7dafca5bf8d80bbd7a244c072be22afb5f50283c` (HEAD da Fase 3D),
+  criada e enviada a `origin` **antes** de qualquer substituição de
+  arquivo. A tag da Fase 0.5 (`legacy-hedonica-pre-rebuild-20260909`)
+  continua intacta.
+- Toda a suíte de testes conhecida (ver seção "Comandos" abaixo)
+  re-executada nesta fase: **todos passando**, incluindo os testes
+  contra PostgreSQL real (banco de teste `patrimar_pricing_v2_test`).
 
 ## Commits desta branch acima de `7dd1d24`
 
@@ -103,105 +76,109 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
 11. `55139eb` — `feat: add controlled private data ingestion pipeline` (Fase 3A).
 12. `72d798c` — `feat: promote private staging into canonical pricing model` (Fase 3B).
 13. `9c06f38` — `feat: add independent pricing reproduction engine` (Fase 3C).
-14. (Fase 3D) commit — `feat: add forensic ambiguity resolution
-    workflow` (`scripts/pricing_reproduction_engine.py` ampliado,
-    `scripts/run_pricing_reproduction.py` corrigido (bug de escopo de
-    aba) + ampliado (parsing genérico de fórmula composta),
-    `scripts/test_pricing_reproduction_engine.py` (14/14),
-    `docs/17-AMBIGUITY-RESOLUTION-METHOD.md`, `docs/03-ROADMAP.md`,
-    `docs/04-DECISIONS.md`, `docs/05-WORKLOG.md`,
-    `docs/99-HANDOFF.md` — tudo público/genérico, nenhuma fórmula/
-    constante/valor privado, nenhuma credencial).
+14. (Fase 3D) commit — `feat: add forensic ambiguity resolution workflow`.
+15. (Fase 3E) commit — `feat: launch Patrimar Pricing Intelligence MVP`
+    (novo frontend `web/pricing-intelligence/`, laboratório legado
+    movido para `legacy/lab/`, `netlify.toml`, servidor PRIVATE,
+    gerador de dataset DEMO, scanner de privacidade, docs 18/19 +
+    atualizações — tudo público/genérico, nenhum dado real,
+    nenhuma credencial).
 
 Nenhum desses commits contém dado privado ou segredo. `data/restricted/`
 nunca foi (e não pode ser) adicionada a nenhum commit. Nenhum
 `.env.*` ou `.dump` nunca foi (e não pode ser) adicionado a nenhum
 commit.
 
-## Arquivos criados/alterados nesta fase (Fase 3D)
+## Arquivos criados/alterados nesta fase (Fase 3E)
 
 ```
-docs/17-AMBIGUITY-RESOLUTION-METHOD.md                 (novo)
-docs/03-ROADMAP.md, 04-DECISIONS.md, 05-WORKLOG.md,
-  99-HANDOFF.md                                         (atualizados)
-scripts/pricing_reproduction_engine.py                 (ampliado — lookup_table_composite, missing_key_defaults)
-scripts/run_pricing_reproduction.py                    (corrigido — bug de escopo de aba; ampliado — parsing generico de HLOOKUP composto)
-scripts/test_pricing_reproduction_engine.py            (ampliado — 14/14, 2 verificacoes novas)
-data/restricted/pricing_rules/reproduction_rules_v2.json (LOCAL, NAO versionado)
-data/restricted/audit/ambiguity-resolution-summary.md   (LOCAL, NAO versionado)
-data/restricted/audit/position-formula-trace.csv        (LOCAL, NAO versionado)
-data/restricted/audit/area-semantics-analysis.csv       (LOCAL, NAO versionado)
-data/restricted/audit/override-pattern-analysis.csv     (LOCAL, NAO versionado)
-data/restricted/audit/missing-floor-factor-analysis.md  (LOCAL, NAO versionado)
-data/restricted/audit/questions-for-rodolfo-final.md    (LOCAL, NAO versionado)
-data/restricted/audit/reproduction-metrics.csv          (LOCAL, NAO versionado -- v1 preservada, secao v2 anexada)
-data/restricted/audit/reproduction-change-log.md        (LOCAL, NAO versionado -- historico da Fase 3C preservado, secao Fase 3D anexada)
-data/restricted/backups/private_dev_POST_3D_AMBIGUITY_RESOLUTION_*.dump (LOCAL, NAO versionado)
+web/pricing-intelligence/index.html                    (novo)
+web/pricing-intelligence/styles.css                     (novo)
+web/pricing-intelligence/app.js                         (novo)
+web/pricing-intelligence/data-provider.js                (novo)
+web/pricing-intelligence/demo-data.json                  (novo, gerado, 100% sintético)
+web/pricing-intelligence/assets/logo-grupo-patrimar-branca.png (novo, extraído do HTML legado)
+scripts/generate_pricing_intelligence_demo_data.py       (novo)
+scripts/pricing_preview_server.py                        (novo)
+scripts/scan_deploy_privacy.py                           (novo)
+netlify.toml                                             (novo)
+legacy/lab/index.html                                    (movido de index.html, git mv)
+legacy/lab/MODEL.md                                      (movido de MODEL.md, git mv)
+tests/model-smoke.mjs                                    (caminho atualizado, lógica igual)
+docs/18-PRICING-INTELLIGENCE-MVP.md                       (novo)
+docs/19-DEPLOYMENT-AND-DEMO-MODE.md                       (novo)
+docs/00-PROJECT-CHARTER.md, 03-ROADMAP.md, 04-DECISIONS.md,
+  05-WORKLOG.md, 07-DATA-DICTIONARY.md, 99-HANDOFF.md      (atualizados)
 ```
 
-Nenhum arquivo pré-existente do laboratório (`index.html`, `MODEL.md`,
-`database/schema.sql`, `netlify/`, `tests/model-smoke.mjs`,
-`data/hedonic_seed_hybrid.csv`) foi modificado ou apagado em nenhuma
-fase até agora — confirmado via `git log` em cada um deles nesta fase.
-Nenhum arquivo de `database/v2/*.sql` foi alterado nesta fase (só
-código Python/JSON e docs) — nenhuma migração nova foi necessária.
+`netlify/functions/hedonic-data.mts` **não foi alterado** — continua
+existindo, backend do laboratório legado, não usado pelo produto novo.
+`database/v2/*.sql` **não foi alterado** — nenhuma migração nova foi
+necessária nesta fase (só leitura do schema existente, pelo servidor
+PRIVATE).
 
 ## Riscos conhecidos que o próximo agente deve considerar antes de agir
 
 1. **Drift entre `database/schema.sql` e a migração Netlify
-   equivalente.** Ainda não resolvido.
-2. **Não verificado em nenhuma auditoria até agora:** se o Netlify DB
-   de produção está provisionado/populado, se o deploy Netlify está
-   ativo, e se `GET /api/hedonic-data` responde em produção.
-3. **Dados reais da Patrimar não devem ser commitados** — ver
+   equivalente.** Ainda não resolvido (herdado das fases anteriores).
+2. **Dados reais da Patrimar não devem ser commitados** — ver
    [[04-DECISIONS]] D4/D6. Qualquer dado real deve ir para
    `data/restricted/` ou para o banco privado `_private_dev`, nunca
-   para caminho versionado.
-4. **`REFERENCE_ALLOCATION_V1` nunca deve ser confundido com a
-   metodologia real** — ver [[04-DECISIONS]] D8. Ainda não usado
-   sobre dado real.
-5. **Os 884 resultados reproduzidos (`result_origin='SYSTEM_CALCULATED'`,
-   `run_type='REPRODUCTION_VALIDATION_RUN'`) ainda NÃO são produção**
-   — vivem só como um run de validação no banco privado. Nenhuma API
-   pública, frontend ou Netlify foi alterado. Nenhum código deve
-   tratar esse run como recomendação de preço ou motor de produção
-   sem uma decisão explícita futura.
-6. **`BUSINESS_SEMANTICS_CONFIRMED` permanece parcial** — sabemos
-   **como** a metodologia calcula (matematicamente confirmado), mas
-   não **por que** ela usa os valores que usa em 2 pontos: (a) origem/
-   critério dos valores da tabela de peso de posição (não a mecânica
-   de uso — isso já está resolvido); (b) critério de negócio do
-   ajuste manual por unidade. Ver
-   `data/restricted/audit/questions-for-rodolfo-final.md` (2
-   perguntas, prontas para consulta humana — NÃO enviadas a
-   ninguém, apenas preparadas).
+   para caminho versionado. `scripts/scan_deploy_privacy.py` é uma
+   camada de defesa adicional, não a única — sempre revisar
+   manualmente também.
+3. **`REFERENCE_ALLOCATION_V1` nunca deve ser confundido com a
+   metodologia real** — ver [[04-DECISIONS]] D8. É a base do dataset
+   DEMO — mantê-lo assim, nunca aproximar seus números dos reais.
+4. **Os 884 resultados reproduzidos ainda não são "preço oficial de
+   produção"** — o modo PRIVATE do produto novo os EXIBE (é read-only,
+   é local, é rastreável), mas isso não é o mesmo que promovê-los a
+   recomendação de preço. Nenhum código deve tratar esse run como
+   decisão de precificação sem uma decisão explícita futura.
+5. **`BUSINESS_SEMANTICS_CONFIRMED` permanece parcial** (herdado da
+   Fase 3D) — 2 perguntas de negócio pendentes em
+   `data/restricted/audit/questions-for-rodolfo-final.md` (local, não
+   versionado, não enviado a ninguém ainda).
+6. **`floor_factor`/`position_factor` por unidade não são recalculados
+   pelo servidor PRIVATE nesta primeira versão** (aparecem vazios na
+   tabela/painel de detalhe) — o preço final e a comparação com a
+   referência são reais; só esses dois fatores intermediários ficam
+   pendentes de uma consulta adicional a `pricing.unit_adjustments`
+   numa fase futura, se necessário.
 7. **Dois bancos PostgreSQL locais no mesmo servidor pré-existente**
    (`patrimar_pricing_v2_test` e `patrimar_pricing_v2_private_dev`) —
    nunca misturar dado real no banco `_test`, nem dado sintético de
    demonstração no banco `_private_dev` (ver D10).
-8. **A resolução do "peso de posição" (P1) é sobre a MECÂNICA da
-   tabela (onde ela fica, como é consultada), não sobre a ORIGEM dos
-   valores dela** (por que cada percentual é o que é) — essa origem
-   continua sendo uma pergunta de negócio pendente (risco 6a).
-9. **`main` e `rebuild/pricing-intelligence` divergirão** até decisão
-   explícita de merge/substituição.
-10. **O Motor A (Market Pricing Engine) ainda não tem nenhuma fonte
-    de dado real** — fora de escopo desta fase também.
+8. **`psql`/`PSQL_BIN`:** o PostgreSQL local está instalado fora do
+   local padrão (`winget`/`Program Files`) neste ambiente — não
+   assumir que `psql` está no `PATH`; usar `PSQL_BIN=<caminho
+   completo>` quando necessário (ver [[19-DEPLOYMENT-AND-DEMO-MODE]]).
+9. **O Motor A (Market Pricing Engine) ainda não tem nenhuma fonte de
+   dado real** — a página "Inteligência de Mercado" do produto é só
+   arquitetura conceitual, rotulada "PRÓXIMA EVOLUÇÃO".
+10. **Responsividade do produto novo foi verificada por leitura do
+    CSS, não por captura visual em viewport estreito** — a ferramenta
+    de redimensionar janela do navegador automatizado não surtiu
+    efeito neste ambiente (viewport permaneceu no tamanho original
+    apesar de reportar sucesso). Uma verificação visual real em
+    dispositivo/emulador móvel ainda é recomendada antes de qualquer
+    apresentação comercial que dependa de mobile.
 11. **Se uma fase futura promover os resultados reproduzidos a
     produção**, revisar antes: (a) as 2 perguntas pendentes de
-    `questions-for-rodolfo-final.md`; (b) se o resíduo de meio
-    centavo por unidade (explicado por precisão de dízima periódica
-    na divisão de participação) precisa de um tratamento de
-    arredondamento específico antes de virar preço "oficial" de
-    produção — hoje ele é apenas documentado, nunca corrigido.
+    `questions-for-rodolfo-final.md`; (b) o resíduo de meio centavo
+    por unidade (precisão de dízima periódica), hoje apenas
+    documentado, nunca corrigido.
 
 ## Comandos úteis já validados
 
 ```bash
+# suíte completa (todos passando na Fase 3E):
 npm run test:model
 python scripts/test_reference_allocation_engine.py
 python scripts/test_validate_db_v2.py
 python scripts/test_pricing_reproduction_engine.py
+python scripts/test_analyze_pricing_logic.py
+python scripts/test_audit_xlsx.py
 python scripts/validate_db_v2.py --sql-dir database/v2 \
   --file 001_schemas.sql --file 002_core.sql --file 003_pricing.sql \
   --file 004_audit.sql --file 005_market_foundation.sql \
@@ -209,38 +186,40 @@ python scripts/validate_db_v2.py --sql-dir database/v2 \
   --file 009_promotion.sql --file 010_reproduction.sql \
   --seed-file database/v2/seeds/001_demo_allocation.sql
 
-# contra o banco de teste SINTÉTICO (requer .env.pricing_v2_test local e psql no PATH/PSQL_BIN):
-powershell -File scripts/db_v2_create_test.ps1   # cria/recria banco+role de teste
-powershell -File scripts/db_v2_apply.ps1 -WithSeed  # aplica DDL (001-010) + seed, fail-fast
-powershell -File scripts/db_v2_verify.ps1        # compara banco real x expected.json (inclui hash)
-powershell -File scripts/db_v2_drop_test.ps1     # remove o banco de teste (NÃO executar sem necessidade)
-
-# testes públicos sintéticos do pipeline (contra qualquer banco "_test"):
+# contra o banco de teste SINTÉTICO (requer .env.pricing_v2_test local e PSQL_BIN se psql não estiver no PATH):
+powershell -File scripts/db_v2_verify.ps1
 python scripts/test_ingest_xlsx_postgres.py --env-file .env.pricing_v2_test
 python scripts/test_promote_staging_to_core.py --env-file .env.pricing_v2_test
-python scripts/test_pricing_reproduction_engine.py
+
+# produto novo — modo DEMO local:
+python scripts/generate_pricing_intelligence_demo_data.py
+cd web/pricing-intelligence && python -m http.server 8899 --bind 127.0.0.1
+
+# produto novo — modo PRIVATE local (dado real, banco privado):
+python scripts/pricing_preview_server.py --env-file .env.pricing_v2_private_dev
+# (defina PSQL_BIN=<caminho completo do psql.exe> se psql não estiver no PATH)
+
+# scanner de privacidade — rodar antes de qualquer push para main/deploy:
+python scripts/scan_deploy_privacy.py --dir web/pricing-intelligence
 
 # reprodução real (NUNCA rodar contra o banco "_test" — só contra o banco privado dedicado):
 python scripts/run_pricing_reproduction.py --mode summary
-python scripts/run_pricing_reproduction.py --mode dry-run --ruleset <ruleset.json privado>
-python scripts/run_pricing_reproduction.py --mode apply --ruleset <ruleset.json privado>
 ```
 
 ## Próximo passo recomendado
 
-Com a reprodução matemática confirmada (`NEAR_EXACT_WITH_EXPLAINED_ROUNDING`),
-há duas linhas de trabalho possíveis, não mutuamente exclusivas:
-
 1. **Validação com Rodolfo** — levar as 2 perguntas de
-   `data/restricted/audit/questions-for-rodolfo-final.md` (em
-   português simples, sem jargão) para fechar
+   `data/restricted/audit/questions-for-rodolfo-final.md` para fechar
    `BUSINESS_SEMANTICS_CONFIRMED`. Recomendado antes de qualquer
-   promoção a produção.
-2. **Fase 4 — Market Pricing Engine e parâmetros de precificação** —
-   com o Motor B (alocação) matematicamente reproduzido, o próximo
-   domínio em aberto é o Motor A (estimativa de valor de mercado),
-   que ainda não tem nenhuma fonte de dado real (ver
-   [[10-PRICING-DOMAIN-MODEL]] e [[04-DECISIONS]] D7).
+   promoção dos resultados reproduzidos a preço oficial.
+2. **Revisão visual + preparação de apresentação comercial** — o
+   produto está publicado em modo DEMO; revisar em dispositivo móvel
+   real (risco 10 acima) e preparar o roteiro de apresentação.
+3. **Fase 4 — Market Pricing Engine** — com o Motor B (alocação) já
+   reproduzido e agora visível no produto, o próximo domínio em
+   aberto é o Motor A (estimativa de valor de mercado), que ainda não
+   tem nenhuma fonte de dado real (ver [[10-PRICING-DOMAIN-MODEL]] e
+   [[04-DECISIONS]] D7).
 
 ## Regra para quem continuar este trabalho
 

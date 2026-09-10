@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const html=fs.readFileSync(new URL('../legacy/lab/index.html',import.meta.url),'utf8');
 const netlifyFunction=fs.readFileSync(new URL('../netlify/functions/hedonic-data.mts',import.meta.url),'utf8');
 const schemaMigration=fs.readFileSync(new URL('../netlify/database/migrations/20260829090000_create_hedonic_schema.sql',import.meta.url),'utf8');
 const seedMigration=fs.readFileSync(new URL('../netlify/database/migrations/20260829090100_seed_hybrid_model.sql',import.meta.url),'utf8');

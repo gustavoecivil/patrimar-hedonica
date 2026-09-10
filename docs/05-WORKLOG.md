@@ -6,6 +6,114 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-10 — Fase 3E: Produto oficial — Patrimar Pricing Intelligence (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** substituir o laboratório hedônico legado como interface
+principal do GitHub (`main`) e do deploy Netlify por um novo produto,
+"PATRIMAR PRICING INTELLIGENCE", com identidade visual reaproveitada
+(nunca recriada) e dois modos de dado isolados (PRIVATE local / DEMO
+público). Ver [[18-PRICING-INTELLIGENCE-MVP]] e
+[[19-DEPLOYMENT-AND-DEMO-MODE]] para o detalhamento completo.
+
+**Recovery tag criada e enviada antes de qualquer substituição:**
+`pre-pricing-intelligence-mvp-20260910` →
+`7dafca5bf8d80bbd7a244c072be22afb5f50283c` (HEAD da Fase 3D),
+`git push origin pre-pricing-intelligence-mvp-20260910` confirmado.
+
+**Novo frontend (`web/pricing-intelligence/`):** `index.html`,
+`styles.css` (tokens de cor/fonte/sombra copiados verbatim de
+`legacy/lab/index.html`), `app.js` (renderização de KPIs, 6 gráficos
+Chart.js, tabela de unidades com busca/filtro/ordenação/paginação,
+painel de detalhe, páginas Validação/Auditoria), `data-provider.js`
+(camada única PRIVATE/DEMO, sem fallback automático, PRIVATE só
+oferecido em `localhost`/`127.0.0.1`), `assets/logo-grupo-patrimar-branca.png`
+(extraído byte-a-byte do base64 embutido no HTML legado — visualmente
+idêntico, nunca redesenhado).
+
+**Dataset DEMO:** `scripts/generate_pricing_intelligence_demo_data.py`
+(novo) gera `web/pricing-intelligence/demo-data.json` a partir do
+motor já público `REFERENCE_ALLOCATION_V1` (D8) — 40 unidades 100%
+sintéticas, nenhum dado real.
+
+**Dataset PRIVATE:** `scripts/pricing_preview_server.py` (novo) —
+servidor local somente leitura, bind exclusivo `127.0.0.1:8765`,
+`GET /api/dataset`, consulta `pricing.unit_price_results` (run
+`IMPORTED_REFERENCE_RUN` mais recente por empreendimento) e
+`pricing.reproduction_comparisons` (run `REPRODUCTION_VALIDATION_RUN`
+final por empreendimento, via `audit.reproduction_runs`, para não
+diluir a taxa de acerto somando tentativas antigas). Testado
+end-to-end contra o banco privado real: **884 unidades reais, VGV
+real, 100% de precisão de reprodução (884/884 a centavo)** — consistente
+com o resultado já registrado na Fase 3D. Verificado também no
+navegador (modo PRIVATE ativado manualmente, dados reais renderizados
+corretamente nos cards/gráficos).
+
+**Legado preservado, não apagado (D15):** `index.html` → `legacy/lab/index.html`,
+`MODEL.md` → `legacy/lab/MODEL.md` (`git mv`, histórico preservado).
+`tests/model-smoke.mjs` atualizado só no caminho lido (aponta para
+`legacy/lab/index.html`); lógica testada inalterada —
+`npm run test:model` **PASSOU** com os mesmos números de sempre
+(`rows:626, R2:0.9017…`). `netlify/functions/hedonic-data.mts` não
+alterado (continua existindo, não é mais usado pelo novo produto).
+
+**`netlify.toml` (novo, raiz):** `[build] publish = "web/pricing-intelligence"`
+— redireciona o site Netlify já existente (`imaginative-fudge-64c0aa`,
+já ligado a este repositório, branch `main`, deploy automático via
+GitHub) para o novo produto, sem precisar alterar configuração do
+site pela API.
+
+**Scanner de privacidade (novo):** `scripts/scan_deploy_privacy.py` —
+varre o diretório de publicação por `.env*`/`.xlsx`/`.sql`/`.py`
+soltos, padrões de credencial Postgres, hash SHA-256 bruto, caminho
+`data/restricted`, nome do banco privado, e `demo-data.json` com
+`meta.mode` diferente de `DEMO`. Rodado contra
+`web/pricing-intelligence/` → **OK, nenhum indício de dado privado.**
+
+**Verificação manual em navegador (Claude-in-Chrome), golden path
+completo:** as 6 páginas (Visão Geral, Unidades, Precificação,
+Validação, Auditoria, Inteligência de Mercado), busca/ordenação/
+paginação da tabela de unidades, abertura do painel de detalhe,
+alternância DEMO↔PRIVATE. Dois bugs visuais reais encontrados e
+corrigidos durante essa verificação (não apenas revisão estática de
+código): (1) texto do card VGV sem `overflow-wrap`, cortando em telas
+estreitas — corrigido com `overflow-wrap: anywhere` + `clamp()`;
+(2) contraste baixo do texto do card VGV no tema escuro, causado por
+um seletor `:root:not([data-theme="light"])` com especificidade maior
+que a regra pretendida — corrigido com seletores explicitamente
+escopados para `.stat-box.highlight .value`. Responsividade
+(`≤900px` sidebar vira gaveta, `≤640px`/`≤420px` grade de cards)
+verificada por leitura do CSS (a ferramenta de redimensionar janela
+do navegador automatizado não surtiu efeito neste ambiente — viewport
+permaneceu no tamanho original apesar da chamada ter reportado
+sucesso).
+
+**Testes executados nesta fase (todos passando):**
+`npm run test:model`; `scripts/test_pricing_reproduction_engine.py`;
+`scripts/test_reference_allocation_engine.py`;
+`scripts/test_validate_db_v2.py`;
+`scripts/test_analyze_pricing_logic.py`; `scripts/test_audit_xlsx.py`;
+`scripts/test_promote_staging_to_core.py --env-file .env.pricing_v2_test`;
+`scripts/test_ingest_xlsx_postgres.py --env-file .env.pricing_v2_test`;
+`scripts/validate_db_v2.py` (DDL completo + seed);
+`scripts/db_v2_verify.ps1` (banco de teste real vs. `expected.json`,
+incluindo hash lógico).
+
+**Documentação:** [[18-PRICING-INTELLIGENCE-MVP]] e
+[[19-DEPLOYMENT-AND-DEMO-MODE]] (novos); [[00-PROJECT-CHARTER]],
+[[03-ROADMAP]], [[04-DECISIONS]] (D14, D15), [[07-DATA-DICTIONARY]],
+este arquivo e [[99-HANDOFF]] atualizados.
+
+**Commits, promoção a `main` e deploy:** ver [[99-HANDOFF]] para
+hashes exatos e confirmação do deploy Netlify — realizados na
+sequência imediata desta mesma sessão, depois de todos os testes e do
+scanner de privacidade terem passado.
+
+**Não realizado nesta fase:** edição de ajuste humano/calibração
+(somente leitura, como especificado); Motor A real (só arquitetura
+conceitual); qualquer alteração em `data/restricted/` ou no banco
+privado além de leitura.
+
 ## 2026-09-10 — Fase 3D: Fechamento forense das ambiguidades e regras (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

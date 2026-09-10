@@ -281,3 +281,54 @@ como equivalente a entender o motivo de negócio de uma regra
 (`BUSINESS_SEMANTICS_CONFIRMED`) — as duas são registradas
 separadamente, e a segunda pode continuar pendente mesmo quando a
 primeira já foi alcançada.
+
+### D14 — O produto público (GitHub `main`/Netlify) é sempre modo DEMO; dado real só existe em modo PRIVATE local
+
+**Data:** 2026-09-10
+**Decisão:** A partir da Fase 3E, o frontend oficial
+(`web/pricing-intelligence/`) opera em dois modos isolados por uma
+única camada de acesso a dado (`data-provider.js`): **PRIVATE**
+(dado real, só disponível rodando em `localhost`/`127.0.0.1`, servido
+por `scripts/pricing_preview_server.py` contra
+`patrimar_pricing_v2_private_dev`) e **DEMO** (100% sintético, lido de
+`web/pricing-intelligence/demo-data.json`, gerado por
+`scripts/generate_pricing_intelligence_demo_data.py` a partir do
+motor já público `REFERENCE_ALLOCATION_V1`, ver D8). **O deploy
+público (GitHub `main` e o site Netlify associado) só executa em modo
+DEMO** — nunca há, e nunca deve haver, nenhuma credencial ou endpoint
+do banco privado alcançável a partir do bundle publicado. Não existe
+fallback automático entre os dois modos: a troca é sempre uma ação
+explícita da pessoa usuária.
+**Motivo:** o produto precisa ser demonstrável publicamente (GitHub,
+Netlify, apresentação comercial) sem depender de, nem arriscar expor,
+nenhum dado real da Patrimar/Rodolfo (mesmo fundamento de D4/D6),
+enquanto ainda permite comparação lado a lado com o dado real para
+quem tem acesso local autorizado.
+**Como aplicar:** qualquer nova tela/funcionalidade do produto deve
+ler dado exclusivamente através do `DataProvider` — nunca hardcoded
+nem lido diretamente de um banco a partir do código publicado. Antes
+de qualquer deploy/push para `main`, rodar
+`scripts/scan_deploy_privacy.py` contra o diretório de publicação
+(ver [[19-DEPLOYMENT-AND-DEMO-MODE]]) — falha do scanner bloqueia o
+deploy. Nenhuma variável de ambiente do Netlify pode referenciar
+`patrimar_pricing_v2_private_dev`.
+
+### D15 — O laboratório hedônico legado é preservado, não apagado, ao deixar de ser a interface principal
+
+**Data:** 2026-09-10
+**Decisão:** Ao substituir `index.html` como página inicial do
+repositório/deploy (Fase 3E), o laboratório legado foi movido — nunca
+apagado — para `legacy/lab/` via `git mv` (histórico Git preservado).
+Nenhum arquivo do laboratório (HTML, `MODEL.md`, função Netlify
+`hedonic-data.mts`, migrações, `tests/model-smoke.mjs`) foi excluído;
+`tests/model-smoke.mjs` foi atualizado apenas para apontar ao novo
+caminho, sem alterar a lógica testada.
+**Motivo:** o laboratório continua sendo trabalho válido (modelo OLS
+reprodutível, testado) e uma futura base para o Motor A (Market
+Pricing Engine, D7) — apagá-lo destruiria contexto técnico sem
+necessidade, e violaria o espírito de D1/D3 (nada relevante deve ser
+perdido só porque deixou de ser a interface principal).
+**Como aplicar:** qualquer evolução futura do laboratório
+(`legacy/lab/`) deve continuar sendo testável isoladamente
+(`npm run test:model`); nenhuma fase futura deve apagar esse
+diretório sem decisão explícita registrada aqui.

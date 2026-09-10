@@ -48,6 +48,24 @@
 > sem nenhum resultado `SYSTEM_CALCULATED` real produzido ainda (a
 > lógica real é configuração privada, nunca parte deste dicionário —
 > ver [[04-DECISIONS]] D12 e [[16-INDEPENDENT-PRICING-REPRODUCTION]]).
+>
+> **Nota (Fase 3E):** o novo produto (`web/pricing-intelligence/`) usa
+> um contrato JSON próprio e público — o mesmo formato em modo DEMO
+> (`demo-data.json`, 100% sintético) e modo PRIVATE (servido por
+> `scripts/pricing_preview_server.py`). Campos:
+> `meta.{mode,algorithm,disclaimer,source}`,
+> `development.{name,city,state,bairro}`, `towers[]`, `typologies[]`,
+> `kpis.{vgv,units_count,towers_count,typologies_count,avg_price_per_m2,
+> adjustments_count,reproduction_accuracy_pct,within_1_cent_count}`,
+> `units[].{tower,unit_code,typology,floor,position,private_area_m2,
+> uncovered_area_m2,weighted_area_m2,floor_factor,position_factor,
+> participation_share,system_price,adjustment,final_price,
+> price_per_m2,status}`,
+> `validation.{units_analyzed,exact_matches,within_1_cent,mae,
+> max_absolute_error,aggregate_delta,classification,note,units[]}`.
+> Este contrato descreve apenas a FORMA do dado (nomes de campo,
+> tipos) — nunca contém, ele mesmo, nenhum valor real; ver
+> [[18-PRICING-INTELLIGENCE-MVP]] e [[19-DEPLOYMENT-AND-DEMO-MODE]].
 
 Somente campos comprovadamente existentes no repositório em 2026-09-09.
 Três representações coexistem hoje: o CSV de seed, o schema relacional

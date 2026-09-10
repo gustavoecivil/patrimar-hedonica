@@ -2,6 +2,25 @@
 
 ## Fase atual
 
+**FASE 3E — Produto oficial: Patrimar Pricing Intelligence.**
+Executada em 2026-09-10 (ver [[05-WORKLOG]],
+[[18-PRICING-INTELLIGENCE-MVP]] e [[19-DEPLOYMENT-AND-DEMO-MODE]]).
+Transforma o trabalho das Fases 1–3D em produto oficial, substituindo
+o laboratório hedônico legado como interface principal do GitHub
+(`main`) e do deploy Netlify. Novo frontend
+(`web/pricing-intelligence/`) reaproveita literalmente a identidade
+visual já aprovada (tokens de cor, Poppins, logo extraída
+byte-a-byte) — nenhum redesenho. Seis páginas executivas (Visão
+Geral, Unidades, Precificação, Validação, Auditoria, Inteligência de
+Mercado), responsivo (sidebar vira gaveta em telas estreitas), sem
+expor fórmula proprietária, schema, SHA ou detalhe de engenharia na
+camada de negócio. Dois modos isolados por uma única camada de acesso
+a dado (D14): **PRIVATE** (dado real, só local) e **DEMO** (100%
+sintético, único modo do deploy público). Laboratório legado
+preservado (não apagado) em `legacy/lab/` (D15). Scanner de
+privacidade (`scripts/scan_deploy_privacy.py`) bloqueia publicação de
+qualquer indício de dado privado antes do deploy.
+
 **FASE 3D — Fechamento forense das ambiguidades e regras.**
 Executada em 2026-09-10 (ver [[05-WORKLOG]] e
 [[17-AMBIGUITY-RESOLUTION-METHOD]]). Investigação forense das
