@@ -145,6 +145,25 @@ de fato problemas de referência para frente, nomenclatura fora do
 padrão, e `DROP` destrutivo — não apenas que ela aprova arquivos
 válidos.
 
+## Extensões pós-Fase 2 (Fases 3A/3B)
+
+Este documento descreve o schema como desenhado na Fase 2. Duas
+extensões aditivas e genéricas foram feitas depois, sem alterar
+nenhuma decisão acima:
+
+- **Fase 3A** (`database/v2/008_ingestion.sql`): schemas `raw`/
+  `staging` — ver [[14-PRIVATE-DATA-INGESTION]].
+- **Fase 3B** (`database/v2/009_promotion.sql`): `audit.promotion_runs`
+  + colunas de lineage/idempotência em `staging.*`, e a distinção
+  `pricing.runs.run_type`/`pricing.unit_price_results.result_origin`
+  entre `SYSTEM_CALCULATED` (uma execução real do motor de alocação)
+  e `IMPORTED_REFERENCE` (um valor que já existia numa fonte externa,
+  apenas armazenado para referência) — ver
+  [[15-STAGING-TO-CANONICAL-PROMOTION]] e [[04-DECISIONS]] D11. Ambas
+  as extensões são aditivas (novas tabelas/colunas com `DEFAULT`) e
+  não alteraram nenhuma linha do cenário sintético de demonstração já
+  existente (Fases 2B/2C), reconfirmado por execução real.
+
 ## Onde fica o detalhe privado
 
 O mapeamento de conceitos observados nas planilhas privadas para as

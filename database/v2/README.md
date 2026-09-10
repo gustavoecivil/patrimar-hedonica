@@ -29,6 +29,8 @@ para o mapeamento detalhado dos conceitos observados nas planilhas.
 006_indexes.sql                  -- índices
 007_views.sql                     -- pricing.v_unit_price_current
 008_ingestion.sql                  -- raw.* (fidelidade da fonte) + staging.* (candidatos normalizados) — Fase 3A
+009_promotion.sql                    -- audit.promotion_runs + colunas de lineage/idempotência/distinção
+                                        -- SYSTEM_CALCULATED vs IMPORTED_REFERENCE — Fase 3B
 ```
 
 **Por que algumas foreign keys são adicionadas via `ALTER TABLE` em
@@ -161,8 +163,18 @@ Resumo (Fase 2): `core` (4 tabelas), `pricing` (12 tabelas), `audit`
 `sheets`, `cells`) e `staging` (5 tabelas: `unit_candidates`,
 `parameter_candidates`, `calibration_candidates`,
 `price_output_candidates`, `mapping_review`) — ver
-[[docs/14-PRIVATE-DATA-INGESTION]]. Total agora: 6 schemas, 30 tabelas
-físicas, 1 view.
+[[docs/14-PRIVATE-DATA-INGESTION]]. **Fase 3B** adicionou 1 tabela nova
+(`audit.promotion_runs`) e colunas em tabelas existentes (nenhuma
+tabela nova em `core`/`pricing`/`staging`): lineage/idempotência em
+`staging.*_candidates` (`promoted_entity_id`/`promoted_at`),
+classificação de revisão em `staging.mapping_review`
+(`review_classification`), distinção `SYSTEM_CALCULATED` vs.
+`IMPORTED_REFERENCE` em `pricing.runs.run_type` e
+`pricing.unit_price_results.result_origin`, `IMPORTED_REFERENCE`
+adicionado a `pricing.vgv_targets.origin`, e classificação de
+tipologia em `core.unit_typologies.classification` — ver
+[[docs/15-STAGING-TO-CANONICAL-PROMOTION]]. Total agora: 6 schemas, 31
+tabelas físicas, 1 view.
 
 ## Pendências e decisões adiadas
 
@@ -172,11 +184,12 @@ físicas, 1 view.
 - **`audit.decisions`** (aprovação/revisão humana formal): adiada —
   `pricing.unit_overrides` já cobre a decisão de override em si; um
   fluxo de aprovação separado não tem requisito confirmado ainda.
-- **Promoção `staging` → `core`/`pricing`**: fora de escopo da Fase
-  3A. `staging.*` guarda apenas candidatos com rastreabilidade e nível
-  de confiança — nenhuma linha real chega a `core`/`pricing`/`market`
-  ainda (ver [[docs/14-PRIVATE-DATA-INGESTION]], Fase 3B é o próximo
-  passo planejado para isso).
+- **Promoção `staging` → `core`/`pricing`**: implementada na Fase 3B,
+  apenas para candidatos `HIGH`/`CANDIDATE` — ver
+  [[docs/15-STAGING-TO-CANONICAL-PROMOTION]]. Itens `MEDIUM`/`LOW`
+  continuam exclusivamente em `staging.mapping_review`, nunca
+  promovidos automaticamente. Nenhuma linha em `market.*` foi criada
+  (fora de escopo — Motor A ainda sem fonte real).
 - **Atributo de posição/lado (`core.units.position_code`)**: mantido
   genérico (texto livre) porque o significado exato ainda não foi
   confirmado — pergunta bloqueante de schema pendente (equivalente a

@@ -2,6 +2,32 @@
 
 ## Fase atual
 
+**FASE 3B — Mapeamento controlado de staging para core/pricing.**
+Executada em 2026-09-09 (ver [[05-WORKLOG]] e
+[[15-STAGING-TO-CANONICAL-PROMOTION]]). Os candidatos de staging com
+confiança `HIGH` (Fase 3A) foram promovidos para `core.*`/`pricing.*`
+no mesmo banco privado dedicado — 2 desenvolvimentos, 5 torres, 2
+tipologias, 884 unidades, 4 parâmetros, 29 entradas de calibração e
+884 resultados de preço **importados** (nunca calculados pelo novo
+sistema — marcados explicitamente `result_origin='IMPORTED_REFERENCE'`,
+`run_type='IMPORTED_REFERENCE_RUN'`, ver [[04-DECISIONS]] D11).
+Extensão mínima e aditiva ao schema v2
+(`database/v2/009_promotion.sql`) para suportar essa distinção,
+lineage por entidade, e idempotência — sem quebrar nenhum dado
+sintético já existente (Fases 2B/2C, reconfirmado). Reconciliação
+privada entre os resultados importados e o VGV já presente na fonte
+fechou com diferença de centavos, explicável por arredondamento.
+Alguns candidatos `HIGH` não foram promovidos por terem valor vazio na
+extração (achado real, não corrigido por invenção — permanecem
+staged) ou por ausência genuína de dado na fonte (2 entradas de
+calibração). Nenhum preço foi calculado; `REFERENCE_ALLOCATION_V1` não
+foi executado sobre dado real; nenhum item `MEDIUM`/`LOW` foi
+promovido. Teste público sintético
+(`scripts/test_promote_staging_to_core.py`) prova o pipeline completo
+— incluindo detecção de duplicidade e rollback com marcação `FAILED`
+— usando somente dados fabricados. Banco de teste sintético
+(`patrimar_pricing_v2_test`, Fase 2C) confirmado intacto ao final.
+
 **FASE 3A — Ingestão controlada das planilhas reais em RAW/STAGING
 PostgreSQL.**
 Executada em 2026-09-09 (ver [[05-WORKLOG]] e
@@ -156,14 +182,15 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    (Fase 1C), gap analysis/modelo canônico preliminar (Fase 1D),
    desenho do schema PostgreSQL v2 (Fase 2), prova end-to-end com
    dados sintéticos (Fase 2B), execução real em PostgreSQL isolado
-   (Fase 2C) e ingestão controlada das duas planilhas reais para
-   RAW/STAGING num banco privado dedicado (Fase 3A) concluídos. Falta
-   a Fase 3B (mapeamento staging → core/pricing, ainda não feita) e a
-   validação das perguntas pendentes registradas privadamente para
-   quem forneceu a planilha original — duas delas bloqueavam decisão
-   de schema e foram resolvidas modelando para a incerteza (ver
-   [[11-DATABASE-V2-DESIGN]]); as demais continuam pendentes, ver
-   `data/restricted/audit/questions-for-rodolfo.md`.
+   (Fase 2C), ingestão controlada das duas planilhas reais para
+   RAW/STAGING (Fase 3A) e promoção controlada de staging para
+   core/pricing (Fase 3B) concluídos. Falta a Fase 3C (reprodução
+   independente da lógica de precificação — motor real, ainda não
+   feita) e a validação das perguntas pendentes registradas
+   privadamente para quem forneceu a planilha original — duas delas
+   bloqueavam decisão de schema e foram resolvidas modelando para a
+   incerteza (ver [[11-DATABASE-V2-DESIGN]]); as demais continuam
+   pendentes, ver `data/restricted/audit/questions-for-rodolfo.md`.
 2. **Dicionário de dados** — formalizar e expandir
    [[07-DATA-DICTIONARY]] cobrindo também os dados a importar das
    planilhas.
@@ -174,7 +201,10 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
    existem como schema físico desde a Fase 3A
    (`database/v2/008_ingestion.sql`) e já receberam as duas planilhas
    reais num banco privado dedicado — ver [[14-PRIVATE-DATA-INGESTION]].
-   Falta a promoção de `staging` para `core`/`pricing` (Fase 3B).
+   A promoção de `staging` para `core`/`pricing` (Fase 3B) já foi
+   feita para os candidatos `HIGH` — ver
+   [[15-STAGING-TO-CANONICAL-PROMOTION]]. Falta ainda um motor real de
+   precificação que grave resultados `SYSTEM_CALCULATED` (Fase 3C).
 4. **PostgreSQL/PostGIS** — evoluir o schema atual (`database/schema.sql`)
    para suportar dados geoespaciais reais (hoje `developments` já tem
    `latitude`/`longitude` como `NUMERIC`, mas não há extensão PostGIS
@@ -205,9 +235,14 @@ não foram iniciadas. Ordem sugerida, sujeita a revisão:
     de ponta a ponta com algoritmo de referência 100% sintético na
     Fase 2B, e executado com sucesso contra um PostgreSQL real e
     isolado na Fase 2C — ver [[12-REFERENCE-ALLOCATION-ENGINE]] e
-    [[13-POSTGRESQL-V2-RUNTIME-VALIDATION]]). Falta, no futuro,
+    [[13-POSTGRESQL-V2-RUNTIME-VALIDATION]]). Resultados de preço
+    reais já existem no schema (Fase 3B), mas todos marcados
+    `result_origin='IMPORTED_REFERENCE'` — importados da fonte, nunca
+    calculados pelo sistema (ver [[04-DECISIONS]] D11 e
+    [[15-STAGING-TO-CANONICAL-PROMOTION]]). Falta, no futuro,
     formalizar um serviço/pipeline com a metodologia real da Patrimar
-    (dependente das perguntas ainda pendentes em
+    que produza resultados `SYSTEM_CALCULATED` (Fase 3C, dependente
+    das perguntas ainda pendentes em
     `data/restricted/audit/questions-for-rodolfo.md`).
 11. **Simulador** — evoluir a "Calculadora" atual (client-side, sessão
     única) para um simulador robusto e auditável.

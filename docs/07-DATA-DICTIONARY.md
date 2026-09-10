@@ -29,6 +29,17 @@
 > célula, candidato normalizado com nível de confiança), e qualquer
 > nome de campo real correspondente só existe como linha de um banco
 > privado, nunca como coluna de schema. Ver [[14-PRIVATE-DATA-INGESTION]].
+>
+> **Nota (Fase 3B):** candidatos `HIGH` de `staging.*` já foram
+> promovidos para linhas reais em `core.developments/towers/
+> unit_typologies/units` e `pricing.parameters/calibration_entries/
+> unit_price_results` — mas, de novo, nenhum conteúdo real está
+> listado abaixo, porque as colunas em si (já documentadas na Fase 2)
+> não mudaram. O que mudou foi a adição de colunas de metadado/
+> distinção (`result_origin`, `run_type`, `classification`,
+> `promoted_entity_id`) — ver [[15-STAGING-TO-CANONICAL-PROMOTION]] e
+> [[04-DECISIONS]] D11 (nunca confundir `IMPORTED_REFERENCE` com
+> `SYSTEM_CALCULATED`).
 
 Somente campos comprovadamente existentes no repositório em 2026-09-09.
 Três representações coexistem hoje: o CSV de seed, o schema relacional

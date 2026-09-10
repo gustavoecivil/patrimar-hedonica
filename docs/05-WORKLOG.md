@@ -6,6 +6,128 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-09 — Fase 3B: Mapeamento controlado de staging para core/pricing (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** promover, no mesmo banco privado da Fase 3A
+(`patrimar_pricing_v2_private_dev`), os candidatos de staging com
+confiança `HIGH` para `core.*`/`pricing.*` — sem calcular nenhum
+preço, e com separação explícita entre dado importado da planilha e
+resultado calculado pelo sistema. Ver [[04-DECISIONS]] D11 e
+[[15-STAGING-TO-CANONICAL-PROMOTION]].
+
+**Checkpoints privados:** `pg_dump` (formato custom) antes
+(`PRE_3B`) e depois (`POST_3B_PRE_REPRODUCTION`) da promoção, em
+`data/restricted/backups/` (nunca versionado).
+
+**Extensão de schema** (`database/v2/009_promotion.sql`, aditiva,
+reconfirmada compatível com o cenário sintético já existente):
+`audit.promotion_runs` (mesmo padrão de estado de
+`raw.ingest_batches`); `promoted_entity_id`/`promoted_at` em
+`staging.*_candidates`; `review_classification` em
+`staging.mapping_review`; `pricing.runs.run_type` e
+`pricing.unit_price_results.result_origin` distinguindo
+`SYSTEM_CALCULATED` de `IMPORTED_REFERENCE`; `IMPORTED_REFERENCE`
+adicionado a `pricing.vgv_targets.origin`; `classification` em
+`core.unit_typologies`.
+
+**Identidade da promoção:** `(ingest_batch_id, mapping_version)` —
+`mapping_version` derivado do hash do conteúdo do arquivo de
+mapeamento privado, nunca de um número escolhido a mão.
+
+**Resultado agregado (números apenas, sem conteúdo):**
+
+| Item | Resultado |
+|---|---|
+| Desenvolvimentos criados | 2 (business_key derivada do hash do workbook, nunca do nome do arquivo) |
+| Torres / tipologias | 5 / 2 (ambas só num dos 2 desenvolvimentos — não inventadas para o outro) |
+| Unidades: candidatas / promovidas / rejeitadas / colisões | 884 / 884 / 0 / 0 |
+| Parâmetros: candidatos / promovidos / não promovidos (valor vazio) | 8 / 4 / 4 |
+| Calibrações: candidatas / promovidas / não promovidas (ausência real na fonte) | 31 / 29 / 2 |
+| Resultados de preço importados promovidos | 884 (100% `result_origin='IMPORTED_REFERENCE'`, 0% `SYSTEM_CALCULATED`) |
+| VGV-alvo criado | 0 (nenhum candidato HIGH disponível — não inventado) |
+| Linhas de lineage / órfãs | 1.803 / 0 |
+| Reconciliação privada (soma de preços importados vs. VGV final já na fonte) | diferença < R$ 0,20 em bases de R$ 195M/262M — explicável por arredondamento |
+| Idempotência (reexecução completa) | `ALREADY_PROMOTED`, 0 linhas novas |
+| Fila de revisão classificada por impacto | 13 itens: 3 `BLOCKING_CORE`, 2 `BLOCKING_PRICING`, 4 `BUSINESS_CLARIFICATION`, 4 `NON_BLOCKING` |
+
+**Achados reais durante a promoção** (investigados contra `raw.cells`,
+nunca corrigidos por invenção):
+1. 2 parâmetros (`CALIBRATION_LOOKUP_COLUMN_INDEX`, um por workbook)
+   vieram vazios porque a extração de célula única do pipeline da Fase
+   3A só lia `raw_value`, não `cached_value` — a célula é, na
+   prática, uma fórmula. Mesma classe de bug já corrigida para
+   extração em massa na Fase 3A, agora também corrigida para célula
+   única em `scripts/ingest_xlsx_postgres.py`. Os 2 valores já
+   staged não foram retroativamente corrigidos nesta fase — ficam
+   como candidatos prontos para uma promoção futura.
+2. 2 parâmetros (`POSITION_ADJUSTMENT_MODE`) vieram vazios porque a
+   célula referenciada no mapeamento privado não existe em
+   `raw.cells` para nenhum dos dois workbooks — gap de mapeamento
+   registrado, não investigado a fundo nesta fase.
+3. 2 entradas de calibração vieram sem fator porque a célula
+   correspondente está genuinamente ausente na fonte (não é fórmula
+   nem vazio-com-fórmula, é ausência real) — preservado como
+   anomalia, não corrigido (mesmo espírito da anomalia PR-018/Fase
+   1C).
+4. Bug de infraestrutura em `run_query_csv` (usado por
+   `ingest_xlsx_postgres.py` e `promote_staging_to_core.py`):
+   `csv.DictReader` descartava silenciosamente qualquer linha de
+   resultado inteiramente vazia — o que ocorre quando uma consulta
+   seleciona 1 única coluna com valor `NULL`. Corrigido usando
+   `csv.reader` com pareamento manual ao cabeçalho. Não afetou nenhum
+   dado já promovido (nenhuma consulta da promoção real usava esse
+   padrão); encontrado e corrigido via o teste sintético público.
+
+**Ferramentas criadas:** `scripts/promote_staging_to_core.py`
+(`--mode dry-run/summary/apply`; reaproveita `ingest_xlsx_postgres.py`;
+idempotente; fail-fast; nunca calcula preço);
+`scripts/test_promote_staging_to_core.py` (teste público de
+integração contra PostgreSQL real, cenário 100% sintético — 12
+verificações, incluindo idempotência e rollback com marcação
+`FAILED` sobre uma duplicidade real). `database/v2/db_v2_apply.ps1`
+atualizado para incluir `009_promotion.sql`.
+
+**Artefatos privados criados** (todos em `data/restricted/`, nunca
+versionados): `audit/core-pricing-promotion-report.md`,
+`audit/core-pricing-profile.csv`,
+`backups/private_dev_PRE_3B_*.dump`,
+`backups/private_dev_POST_3B_PRE_REPRODUCTION_*.dump`.
+
+**Documentação pública criada/atualizada:**
+[[15-STAGING-TO-CANONICAL-PROMOTION]] (novo); [[04-DECISIONS]] (D11,
+nova); [[03-ROADMAP]], [[07-DATA-DICTIONARY]],
+[[11-DATABASE-V2-DESIGN]] (referências sanitizadas).
+
+**Verificação de segurança:** nenhuma senha versionada; nenhum
+`.env`/dump rastreado; `data/restricted/` confirmado não rastreado;
+busca textual nos artefatos novos contra nomes/hashes privados
+conhecidos das fases anteriores — nenhuma ocorrência.
+
+**Testes:** `scripts/test_promote_staging_to_core.py` (12/12, contra
+PostgreSQL real) — **PASSOU**; `scripts/test_ingest_xlsx_postgres.py`
+(19/19, reconfirmado após a correção do `run_query_csv`) — **PASSOU**;
+`validate_db_v2.py` (9 arquivos de DDL + seed) — **PASSOU**;
+`test_validate_db_v2.py`, `test_reference_allocation_engine.py`
+(21/21) — **PASSOU**; `verify_postgres_v2.py` contra
+`patrimar_pricing_v2_test` — **PASSOU** (banco sintético confirmado
+intacto, hash lógico idêntico, mesmo depois da extensão de schema
+009 aplicada nele também); `npm run test:model` — **PASSOU**.
+`database/schema.sql`, `index.html`,
+`netlify/functions/hedonic-data.mts` e as migrations Netlify
+existentes confirmados sem alteração.
+
+**Estado final:** `patrimar_pricing_v2_private_dev` agora tem 2
+desenvolvimentos reais promovidos em `core`/`pricing`, todos os
+resultados de preço marcados `IMPORTED_REFERENCE`; `raw.*`
+inalterado; `staging.*` enriquecido com lineage de promoção, nunca
+alterado destrutivamente. `patrimar_pricing_v2_test` permanece
+intacto.
+
+**Próximo passo recomendado:** ver [[99-HANDOFF]].
+
+---
+
 ## 2026-09-09 — Fase 3A: Ingestão controlada das planilhas reais em RAW/STAGING PostgreSQL (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

@@ -194,3 +194,28 @@ export ou backup desse banco pode ser salvo fora de
 `data/restricted/` ou de um caminho fora do repositório. Antes de
 qualquer promoção futura de `staging` para `core`/`pricing` (Fase 3B),
 confirmar novamente qual banco está sendo usado como origem.
+
+### D11 — Resultado importado de uma fonte externa nunca pode ser confundido com resultado calculado pelo sistema
+
+**Data:** 2026-09-09
+**Decisão:** Qualquer valor de preço, VGV ou execução que já existia
+numa fonte externa (ex.: planilha real) e seja apenas armazenado no
+schema v2 para referência/análise deve ser explicitamente marcado
+como tal — `pricing.runs.run_type='IMPORTED_REFERENCE_RUN'` e
+`pricing.unit_price_results.result_origin='IMPORTED_REFERENCE'`
+(`database/v2/009_promotion.sql`, Fase 3B) — nunca com os valores
+`SYSTEM_RUN`/`SYSTEM_CALCULATED`, reservados exclusivamente a uma
+execução real do motor de alocação (`REFERENCE_ALLOCATION_V1` ou um
+motor real futuro).
+**Motivo:** a Fase 3B promoveu, do banco privado, resultados de preço
+que já existiam nas duas planilhas reais — sem essa distinção
+explícita no próprio dado persistido, seria possível, numa consulta
+futura descuidada, apresentar um número que veio de uma planilha como
+se fosse um cálculo produzido pelo Patrimar Pricing Intelligence. Isso
+violaria a separação exigida entre "dado importado" e "resultado
+calculado pelo novo sistema".
+**Como aplicar:** nenhuma consulta, relatório, ou funcionalidade
+futura que exiba `pricing.unit_price_results` pode omitir ou ignorar
+`result_origin`. Nenhum motor real de precificação (Fase 3C ou
+posterior) deve gravar resultados com `result_origin` diferente de
+`SYSTEM_CALCULATED`. Ver [[15-STAGING-TO-CANONICAL-PROMOTION]].

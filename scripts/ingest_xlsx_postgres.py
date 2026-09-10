@@ -76,7 +76,25 @@ def run_query_csv(psql_bin: str, sql: str) -> list[dict]:
         os.unlink(tmp_path)
     if result.returncode != 0:
         raise RuntimeError(f"consulta falhou: {result.stderr}")
-    return list(csv.DictReader(io.StringIO(result.stdout)))
+    # csv.DictReader (não usado aqui de propósito) pula silenciosamente
+    # qualquer linha fisicamente vazia — o que acontece sempre que a
+    # consulta seleciona UMA única coluna e o valor daquela linha é NULL
+    # (o psql --csv representa essa linha como uma linha em branco, sem
+    # nenhuma vírgula). Isso faz a linha inteira desaparecer do resultado,
+    # não só o valor virar None — achado real ao testar promote_staging_to_core.py
+    # nesta fase. Por isso, usamos csv.reader (que não pula linha vazia)
+    # e pareamos manualmente com o cabeçalho.
+    reader = csv.reader(io.StringIO(result.stdout))
+    rows = list(reader)
+    if not rows:
+        return []
+    header, data_rows = rows[0], rows[1:]
+    out = []
+    for r in data_rows:
+        if r == [] and len(header) == 1:
+            r = [""]
+        out.append(dict(zip(header, r)))
+    return out
 
 
 def sql_str(value) -> str:
@@ -370,7 +388,11 @@ def cmd_stage(args) -> int:
                     "mapping_status, notes) VALUES ("
                     f"{workbook_sql}, {sheet_sql}, {sql_str(cell_ref)}, "
                     f"{sql_str(entry.get('parameter_key_guess'))}, "
-                    f"(SELECT raw_value FROM raw.cells rc WHERE rc.sheet_id={sheet_sql} "
+                    # COALESCE(raw_value, cached_value): mesmo motivo documentado em fetch_sheet_rows —
+                    # uma célula de parâmetro isolada também pode ser formula-driven (achado real da
+                    # Fase 3B ao promover CALIBRATION_LOOKUP_COLUMN_INDEX, ex. COLUMNS(B1:AV1)), não só
+                    # colunas de dado em massa.
+                    f"(SELECT COALESCE(raw_value, cached_value) FROM raw.cells rc WHERE rc.sheet_id={sheet_sql} "
                     f"AND rc.cell_ref={sql_str(cell_ref)}), "
                     f"{sql_str(entry.get('value_type_guess'))}, 'HIGH', 'CANDIDATE', {sql_str(entry.get('notes'))});"
                 )
