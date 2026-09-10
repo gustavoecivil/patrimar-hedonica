@@ -18,48 +18,72 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
    (D7 dois motores; D8 referência sintética não é metodologia
    oficial; D9–D11 isolamento de bancos e distinção importado/
    calculado; D12 lógica real é configuração privada; D13 evidência
-   classificada + prova estrutural; **D14 produto público é sempre
+   classificada + prova estrutural; D14 produto público é sempre
    DEMO, dado real só em PRIVATE local; D15 laboratório legado
-   preservado, não apagado**).
+   preservado, não apagado; **D16 ciclo atual encerrado como Prova de
+   Conceito — feature freeze até revisão explícita de Gustavo
+   Santos**).
 6. [[08-SPREADSHEET-AUDIT-METHOD]] … [[17-AMBIGUITY-RESOLUTION-METHOD]]
    — metodologia/modelo das fases 1–3D, sem conteúdo privado.
 7. [[18-PRICING-INTELLIGENCE-MVP]] — o produto oficial (Fase 3E): o
    que ele é, as 6 páginas, os dois modos de dado.
 8. [[19-DEPLOYMENT-AND-DEMO-MODE]] — como rodar PRIVATE local, como o
    deploy DEMO funciona, o scanner de privacidade.
-9. Este documento (99-HANDOFF) — estado exato da última execução.
+9. [[20-POC-CLOSURE]] — encerramento formal como prova de conceito
+   (Fase 3F): feature freeze, status do Motor B, pacote de entrega.
+10. Este documento (99-HANDOFF) — estado exato da última execução.
 
-## Estado atual (2026-09-10, Fase 3E)
+## Estado atual (2026-09-10, Fase 3F)
 
-- **Produto oficial:** Patrimar Pricing Intelligence
-  (`web/pricing-intelligence/`) substituiu o laboratório hedônico
-  legado como interface principal do repositório e do deploy
-  público. O laboratório continua existindo, preservado, em
-  `legacy/lab/` (D15) — não é mais a página inicial.
-- **Dois modos de dado, nunca misturados (D14):** PRIVATE (dado real,
-  só `localhost`/`127.0.0.1`, via `scripts/pricing_preview_server.py`)
-  e DEMO (100% sintético, único modo do GitHub `main`/Netlify, via
-  `web/pricing-intelligence/demo-data.json`).
-- **PRIVATE testado end-to-end contra o banco real:** 884 unidades,
-  VGV real, 100% de precisão de reprodução (884/884 dentro de 1
-  centavo) — mesmo resultado já confirmado na Fase 3D, agora também
-  visível na interface do produto (não só em script/CSV de auditoria).
-- **`netlify.toml` (novo, raiz do repo)** aponta a publicação do site
-  Netlify já existente (`imaginative-fudge-64c0aa`) para
-  `web/pricing-intelligence` — nenhum site novo foi criado, nenhuma
-  configuração do site foi alterada via API, só o diretório de
-  publicação via arquivo versionado.
-- **`scripts/scan_deploy_privacy.py` (novo)** bloqueia deploy se
-  encontrar qualquer indício estrutural de dado privado no diretório
-  publicado — rodado com sucesso (`OK`) antes da promoção a `main`.
-- **Recovery tag desta fase:** `pre-pricing-intelligence-mvp-20260910`
-  → `7dafca5bf8d80bbd7a244c072be22afb5f50283c` (HEAD da Fase 3D),
-  criada e enviada a `origin` **antes** de qualquer substituição de
-  arquivo. A tag da Fase 0.5 (`legacy-hedonica-pre-rebuild-20260909`)
-  continua intacta.
-- Toda a suíte de testes conhecida (ver seção "Comandos" abaixo)
-  re-executada nesta fase: **todos passando**, incluindo os testes
-  contra PostgreSQL real (banco de teste `patrimar_pricing_v2_test`).
+- **Status oficial do produto:** Prova de Conceito Funcional.
+  `FEATURE_FREEZE=SIM` — ver [[04-DECISIONS]] D16. Nenhuma
+  funcionalidade nova deve ser adicionada sem decisão explícita
+  futura de Gustavo Santos que levante o freeze.
+- **Interface identifica a POC de forma permanente:** selo "Prova de
+  Conceito" na barra lateral (tooltip com o aviso completo), nota de
+  rodapé sensível ao modo de dado ("POC • Dados privados locais" /
+  "POC • Dados sintéticos").
+- **Linguagem de precisão de reprodução corrigida** — nunca mais
+  implica igualdade decimal absoluta sem qualificação; "884 de 884
+  dentro de R$ 0,01" é o padrão adotado em toda a interface.
+- **Defeito real corrigido** (não presente na Fase 3E, só visível ao
+  testar o modo PRIVATE contra o banco real): 100% das 884 unidades
+  reais têm `floor = NULL` — isso quebrava o gráfico "Preço/m² por
+  pavimento" e disparava um `alert()` que travava a aba inteira
+  (inclusive para automação de navegador). Corrigido em
+  `web/pricing-intelligence/app.js` (agrupamento ignora unidades sem
+  pavimento; erro de carregamento não usa mais `alert()`) e em
+  `scripts/pricing_preview_server.py` (campos genuinamente ausentes
+  — `weighted_area_m2`, `participation_share` — não são mais
+  mascarados como `0` via `COALESCE`; chegam como `null` até a
+  interface, que agora exibe "—" em vez de um zero enganoso).
+- **Motor B formalizado:** `MATHEMATICAL_REPRODUCTION=VALIDATED`,
+  `UNITS=884`, `CENT_PRECISION_COVERAGE=884/884`,
+  `DATABASE_MODEL=VALIDATED`, `LINEAGE=VALIDATED`,
+  `PRIVATE_RUNTIME=VALIDATED`, `DEMO_RUNTIME=VALIDATED`,
+  `BUSINESS_SEMANTICS=PARTIAL` (não bloqueador).
+- **Pacote de entrega privado** criado em
+  `data/restricted/deliverables/` (relatório executivo, resumo de 1
+  página, roteiro de demonstração, FAQ do apresentador, checklist de
+  apresentação) — confirmado fora do controle de versão
+  (`git check-ignore` positivo para todos os arquivos). Sem proposta
+  comercial.
+- **Recovery tag desta fase:** `poc-delivery-candidate-20260910` →
+  `02b54114ee65166b1e2b5f37da132506044d1c3a`, criada e enviada a
+  `origin`. Tags anteriores (`legacy-hedonica-pre-rebuild-20260909`,
+  `pre-pricing-intelligence-mvp-20260910`) continuam intactas.
+- **`main` e `rebuild/pricing-intelligence` sincronizadas** em
+  `02b5411` (fast-forward, sem divergência).
+- **Deploy Netlify confirmado** servindo o commit `02b5411`
+  (`https://imaginative-fudge-64c0aa.netlify.app`) — HTTP 200,
+  título/selo/textos novos visíveis, console sem erros de aplicação.
+- Suíte de testes completa (ver seção "Comandos" abaixo) e o scanner
+  de privacidade re-executados após todas as correções: **todos
+  passando / `OK`**. Verificação adicional (grep manual em todo o
+  repositório versionado) não encontrou nenhuma credencial, connection
+  string ou hash de XLSX real — apenas nomes de variável de ambiente
+  genéricos e o hash determinístico do cenário sintético público
+  (D8).
 
 ## Commits desta branch acima de `7dd1d24`
 
@@ -77,102 +101,92 @@ Leia isto, depois leia os documentos referenciados, na ordem sugerida.
 12. `72d798c` — `feat: promote private staging into canonical pricing model` (Fase 3B).
 13. `9c06f38` — `feat: add independent pricing reproduction engine` (Fase 3C).
 14. (Fase 3D) commit — `feat: add forensic ambiguity resolution workflow`.
-15. (Fase 3E) commit — `feat: launch Patrimar Pricing Intelligence MVP`
-    (novo frontend `web/pricing-intelligence/`, laboratório legado
-    movido para `legacy/lab/`, `netlify.toml`, servidor PRIVATE,
-    gerador de dataset DEMO, scanner de privacidade, docs 18/19 +
-    atualizações — tudo público/genérico, nenhum dado real,
-    nenhuma credencial).
+15. `6915820` — `feat: launch Patrimar Pricing Intelligence MVP` (Fase 3E).
+16. `02b5411` — `chore: finalize Patrimar Pricing Intelligence proof of concept`
+    (Fase 3F — selo de POC na interface, linguagem de precisão
+    corrigida, correção do defeito real de `floor = NULL`/`alert()`,
+    status formal do Motor B, `docs/20-POC-CLOSURE.md` — tudo
+    público/genérico, nenhum dado real, nenhuma credencial).
 
 Nenhum desses commits contém dado privado ou segredo. `data/restricted/`
 nunca foi (e não pode ser) adicionada a nenhum commit. Nenhum
 `.env.*` ou `.dump` nunca foi (e não pode ser) adicionado a nenhum
 commit.
 
-## Arquivos criados/alterados nesta fase (Fase 3E)
+## Arquivos criados/alterados nesta fase (Fase 3F)
 
 ```
-web/pricing-intelligence/index.html                    (novo)
-web/pricing-intelligence/styles.css                     (novo)
-web/pricing-intelligence/app.js                         (novo)
-web/pricing-intelligence/data-provider.js                (novo)
-web/pricing-intelligence/demo-data.json                  (novo, gerado, 100% sintético)
-web/pricing-intelligence/assets/logo-grupo-patrimar-branca.png (novo, extraído do HTML legado)
-scripts/generate_pricing_intelligence_demo_data.py       (novo)
-scripts/pricing_preview_server.py                        (novo)
-scripts/scan_deploy_privacy.py                           (novo)
-netlify.toml                                             (novo)
-legacy/lab/index.html                                    (movido de index.html, git mv)
-legacy/lab/MODEL.md                                      (movido de MODEL.md, git mv)
-tests/model-smoke.mjs                                    (caminho atualizado, lógica igual)
-docs/18-PRICING-INTELLIGENCE-MVP.md                       (novo)
-docs/19-DEPLOYMENT-AND-DEMO-MODE.md                       (novo)
-docs/00-PROJECT-CHARTER.md, 03-ROADMAP.md, 04-DECISIONS.md,
-  05-WORKLOG.md, 07-DATA-DICTIONARY.md, 99-HANDOFF.md      (atualizados)
-```
+docs/20-POC-CLOSURE.md                                    (novo)
+docs/03-ROADMAP.md, 04-DECISIONS.md, 05-WORKLOG.md,
+  99-HANDOFF.md                                            (atualizados)
+web/pricing-intelligence/index.html                        (selo POC, nota de modo, intro Visão Geral, textos revisados)
+web/pricing-intelligence/styles.css                         (estilos do selo POC, intro Visão Geral)
+web/pricing-intelligence/app.js                             (correção floor=NULL, remoção de alert(), campos "-" em vez de zero enganoso)
+web/pricing-intelligence/demo-data.json                     (regenerado — nota de validação sem referência a docs internos)
+scripts/generate_pricing_intelligence_demo_data.py          (nota de validação simplificada)
+scripts/pricing_preview_server.py                           (weighted_area_m2/participation_share não mais mascarados com COALESCE)
 
-`netlify/functions/hedonic-data.mts` **não foi alterado** — continua
-existindo, backend do laboratório legado, não usado pelo produto novo.
-`database/v2/*.sql` **não foi alterado** — nenhuma migração nova foi
-necessária nesta fase (só leitura do schema existente, pelo servidor
-PRIVATE).
+data/restricted/deliverables/                                (NOVO, LOCAL, NUNCA versionado)
+  RELATORIO-EXECUTIVO-PATRIMAR-PRICING-INTELLIGENCE-POC.md
+  RESUMO-EXECUTIVO-1-PAGINA.md
+  ROTEIRO-DEMONSTRACAO.md
+  FAQ-APRESENTADOR.md
+  CHECKLIST-APRESENTACAO.md
+```
 
 ## Riscos conhecidos que o próximo agente deve considerar antes de agir
 
-1. **Drift entre `database/schema.sql` e a migração Netlify
+1. **`FEATURE_FREEZE=SIM` está em vigor (D16).** Não adicionar login,
+   permissões, workflow corporativo, edição produtiva, integrações
+   ERP/CRM, Motor A operacional, novos modelos de ML ou agentes sem
+   confirmação explícita de Gustavo Santos de que o freeze foi
+   levantado.
+2. **Drift entre `database/schema.sql` e a migração Netlify
    equivalente.** Ainda não resolvido (herdado das fases anteriores).
-2. **Dados reais da Patrimar não devem ser commitados** — ver
-   [[04-DECISIONS]] D4/D6. Qualquer dado real deve ir para
-   `data/restricted/` ou para o banco privado `_private_dev`, nunca
-   para caminho versionado. `scripts/scan_deploy_privacy.py` é uma
+3. **Dados reais da Patrimar não devem ser commitados** — ver
+   [[04-DECISIONS]] D4/D6. `scripts/scan_deploy_privacy.py` é uma
    camada de defesa adicional, não a única — sempre revisar
    manualmente também.
-3. **`REFERENCE_ALLOCATION_V1` nunca deve ser confundido com a
-   metodologia real** — ver [[04-DECISIONS]] D8. É a base do dataset
-   DEMO — mantê-lo assim, nunca aproximar seus números dos reais.
-4. **Os 884 resultados reproduzidos ainda não são "preço oficial de
-   produção"** — o modo PRIVATE do produto novo os EXIBE (é read-only,
-   é local, é rastreável), mas isso não é o mesmo que promovê-los a
-   recomendação de preço. Nenhum código deve tratar esse run como
-   decisão de precificação sem uma decisão explícita futura.
-5. **`BUSINESS_SEMANTICS_CONFIRMED` permanece parcial** (herdado da
-   Fase 3D) — 2 perguntas de negócio pendentes em
+4. **`REFERENCE_ALLOCATION_V1` nunca deve ser confundido com a
+   metodologia real** — ver [[04-DECISIONS]] D8.
+5. **Os 884 resultados reproduzidos ainda não são "preço oficial de
+   produção"** — o modo PRIVATE os exibe (read-only, local,
+   rastreável), mas isso não é promoção a recomendação de preço.
+6. **`BUSINESS_SEMANTICS_CONFIRMED` permanece parcial** — 2 perguntas
+   de negócio pendentes em
    `data/restricted/audit/questions-for-rodolfo-final.md` (local, não
-   versionado, não enviado a ninguém ainda).
-6. **`floor_factor`/`position_factor` por unidade não são recalculados
-   pelo servidor PRIVATE nesta primeira versão** (aparecem vazios na
-   tabela/painel de detalhe) — o preço final e a comparação com a
-   referência são reais; só esses dois fatores intermediários ficam
-   pendentes de uma consulta adicional a `pricing.unit_adjustments`
-   numa fase futura, se necessário.
-7. **Dois bancos PostgreSQL locais no mesmo servidor pré-existente**
+   versionado, não enviado a ninguém ainda). Não bloqueador para o
+   status atual da POC.
+7. **100% das 884 unidades reais têm `floor` não identificado** — a
+   interface já trata isso corretamente (estado vazio explicativo,
+   nunca "null" cru), mas qualquer nova funcionalidade que dependa de
+   pavimento real precisará resolver essa lacuna de dado primeiro.
+8. **Dois bancos PostgreSQL locais no mesmo servidor pré-existente**
    (`patrimar_pricing_v2_test` e `patrimar_pricing_v2_private_dev`) —
    nunca misturar dado real no banco `_test`, nem dado sintético de
    demonstração no banco `_private_dev` (ver D10).
-8. **`psql`/`PSQL_BIN`:** o PostgreSQL local está instalado fora do
-   local padrão (`winget`/`Program Files`) neste ambiente — não
-   assumir que `psql` está no `PATH`; usar `PSQL_BIN=<caminho
-   completo>` quando necessário (ver [[19-DEPLOYMENT-AND-DEMO-MODE]]).
-9. **O Motor A (Market Pricing Engine) ainda não tem nenhuma fonte de
-   dado real** — a página "Inteligência de Mercado" do produto é só
-   arquitetura conceitual, rotulada "PRÓXIMA EVOLUÇÃO".
-10. **Responsividade do produto novo foi verificada por leitura do
-    CSS, não por captura visual em viewport estreito** — a ferramenta
-    de redimensionar janela do navegador automatizado não surtiu
-    efeito neste ambiente (viewport permaneceu no tamanho original
-    apesar de reportar sucesso). Uma verificação visual real em
-    dispositivo/emulador móvel ainda é recomendada antes de qualquer
-    apresentação comercial que dependa de mobile.
-11. **Se uma fase futura promover os resultados reproduzidos a
-    produção**, revisar antes: (a) as 2 perguntas pendentes de
-    `questions-for-rodolfo-final.md`; (b) o resíduo de meio centavo
-    por unidade (precisão de dízima periódica), hoje apenas
-    documentado, nunca corrigido.
+9. **`psql`/`PSQL_BIN`:** o PostgreSQL local está instalado fora do
+   local padrão (`winget`/`Program Files`) neste ambiente
+   (`D:\GSA\PostgreSQL\18\bin\psql.exe`) — usar `PSQL_BIN=<caminho
+   completo>` quando `psql` não estiver no `PATH`.
+10. **O Motor A (Market Pricing Engine) ainda não tem nenhuma fonte
+    de dado real** — a página "Inteligência de Mercado" do produto é
+    só arquitetura conceitual.
+11. **Responsividade verificada por leitura do CSS, não por captura
+    visual em viewport estreito** — a ferramenta de redimensionar
+    janela do navegador automatizado não surtiu efeito neste
+    ambiente em nenhuma das duas fases em que foi tentada (3E e 3F).
+    Uma verificação visual real em dispositivo/emulador móvel ainda é
+    recomendada antes de qualquer apresentação comercial.
+12. **O pacote de entrega em `data/restricted/deliverables/` é
+    material potencial de entrega** — não deve ser enviado a ninguém
+    sem revisão e aprovação prévia de Gustavo Santos (ver
+    [[20-POC-CLOSURE]]). Nenhum desses arquivos deve ser commitado.
 
 ## Comandos úteis já validados
 
 ```bash
-# suíte completa (todos passando na Fase 3E):
+# suíte completa (todos passando na Fase 3F):
 npm run test:model
 python scripts/test_reference_allocation_engine.py
 python scripts/test_validate_db_v2.py
@@ -191,35 +205,29 @@ powershell -File scripts/db_v2_verify.ps1
 python scripts/test_ingest_xlsx_postgres.py --env-file .env.pricing_v2_test
 python scripts/test_promote_staging_to_core.py --env-file .env.pricing_v2_test
 
-# produto novo — modo DEMO local:
+# produto — modo DEMO local:
 python scripts/generate_pricing_intelligence_demo_data.py
 cd web/pricing-intelligence && python -m http.server 8899 --bind 127.0.0.1
 
-# produto novo — modo PRIVATE local (dado real, banco privado):
+# produto — modo PRIVATE local (dado real, banco privado, somente leitura):
 python scripts/pricing_preview_server.py --env-file .env.pricing_v2_private_dev
 # (defina PSQL_BIN=<caminho completo do psql.exe> se psql não estiver no PATH)
 
 # scanner de privacidade — rodar antes de qualquer push para main/deploy:
 python scripts/scan_deploy_privacy.py --dir web/pricing-intelligence
-
-# reprodução real (NUNCA rodar contra o banco "_test" — só contra o banco privado dedicado):
-python scripts/run_pricing_reproduction.py --mode summary
 ```
 
 ## Próximo passo recomendado
 
-1. **Validação com Rodolfo** — levar as 2 perguntas de
-   `data/restricted/audit/questions-for-rodolfo-final.md` para fechar
-   `BUSINESS_SEMANTICS_CONFIRMED`. Recomendado antes de qualquer
-   promoção dos resultados reproduzidos a preço oficial.
-2. **Revisão visual + preparação de apresentação comercial** — o
-   produto está publicado em modo DEMO; revisar em dispositivo móvel
-   real (risco 10 acima) e preparar o roteiro de apresentação.
-3. **Fase 4 — Market Pricing Engine** — com o Motor B (alocação) já
-   reproduzido e agora visível no produto, o próximo domínio em
-   aberto é o Motor A (estimativa de valor de mercado), que ainda não
-   tem nenhuma fonte de dado real (ver [[10-PRICING-DOMAIN-MODEL]] e
-   [[04-DECISIONS]] D7).
+`PROXIMO_PASSO=ESTUDO_DO_MANUAL_E_REVIEW_COM_GUSTAVO` — nenhum
+desenvolvimento novo deve começar antes dessa revisão. Depois dela,
+possíveis linhas de trabalho (nenhuma iniciada, nenhuma orçada):
+
+1. Validar as 2 perguntas de negócio pendentes com quem mantém a
+   planilha hoje.
+2. Decisão de negócio sobre iniciar o desenho do Motor A.
+3. Decisão de negócio sobre levantar o feature freeze (D16) para uma
+   eventual evolução a sistema corporativo.
 
 ## Regra para quem continuar este trabalho
 
@@ -232,3 +240,5 @@ de aba/campo, fórmulas específicas, valores, senhas, connection
 strings, ou qualquer conteúdo das planilhas privadas em nenhum
 documento dentro de `docs/`, `fixtures/` ou qualquer arquivo `.sql`/
 `.ps1`/`.py` — apenas descrições sanitizadas e números agregados.
+**A partir da Fase 3F, respeitar o feature freeze (D16) até
+confirmação explícita de Gustavo Santos.**
