@@ -332,3 +332,29 @@ perdido só porque deixou de ser a interface principal).
 (`legacy/lab/`) deve continuar sendo testável isoladamente
 (`npm run test:model`); nenhuma fase futura deve apagar esse
 diretório sem decisão explícita registrada aqui.
+
+### D16 — O ciclo atual é encerrado formalmente como Prova de Conceito; feature freeze até revisão explícita
+
+**Data:** 2026-09-10
+**Decisão:** A Fase 3F encerra o ciclo atual do Patrimar Pricing
+Intelligence com o status oficial **"Prova de Conceito Funcional"**
+— nunca `PRODUCTION READY`. A partir desta fase, `FEATURE_FREEZE=SIM`:
+nenhuma funcionalidade nova (login, permissões, workflow corporativo,
+edição produtiva, integrações ERP/CRM, Motor A operacional, novos
+modelos de ML, agentes) deve ser adicionada sem uma decisão explícita
+futura de Gustavo Santos que levante esse freeze. Trabalho permitido
+enquanto o freeze estiver em vigor: correção de defeitos reais,
+polimento de linguagem/visual, documentação, segurança (ex.: scanner
+de privacidade) e organização de material de entrega.
+**Motivo:** entregar uma prova de conceito clara, estável e
+apresentável é mais valioso, neste momento do projeto, do que
+continuar acumulando funcionalidade sem uma decisão de negócio sobre
+se/como investir na evolução para sistema corporativo. Declarar
+`PRODUCTION READY` prematuramente criaria expectativa incorreta sobre
+segurança, multiusuário e prontidão operacional que a POC nunca teve.
+**Como aplicar:** qualquer sessão futura que considere adicionar uma
+das funcionalidades listadas acima deve primeiro confirmar,
+explicitamente com Gustavo Santos, que o feature freeze foi
+levantado — a ausência dessa confirmação é motivo suficiente para
+recusar a funcionalidade e sugerir registrá-la apenas como
+possibilidade futura (ver [[20-POC-CLOSURE]] e [[99-HANDOFF]]).

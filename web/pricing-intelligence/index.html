@@ -23,6 +23,7 @@
     <img src="assets/logo-grupo-patrimar-branca.png" alt="Grupo Patrimar" width="132" height="52">
     <div class="wordmark">PATRIMAR <span class="gold">PRICING INTELLIGENCE</span></div>
     <div class="sidebar-sub">Plataforma de Inteligência e Governança de Precificação</div>
+    <div class="poc-badge" title="Ambiente demonstrativo. Não representa ainda um sistema corporativo de produção.">Prova de Conceito</div>
   </div>
 
   <nav class="sidebar-nav">
@@ -58,6 +59,7 @@
   <div class="sidebar-footer">
     <div class="footer-brand">Patrimar Engenharia</div>
     Governança e inteligência de precificação
+    <div class="poc-mode-note" id="poc-mode-note"></div>
     <div class="data-mode-switch">
       <button class="mode-btn active" data-mode="DEMO" onclick="setDataMode('DEMO')">DEMO</button>
       <button class="mode-btn" id="private-mode-item" data-mode="PRIVATE" onclick="setDataMode('PRIVATE')" style="display:none">PRIVATE</button>
@@ -83,19 +85,25 @@
       </div>
     </div>
 
+    <div class="poc-intro">
+      <div class="poc-intro-item"><div class="poc-intro-label">O que é</div><div class="poc-intro-text">Uma prova de conceito que transforma dados de planilha em um banco de dados estruturado, com regras de cálculo auditáveis e rastreáveis.</div></div>
+      <div class="poc-intro-item"><div class="poc-intro-label">O que foi provado</div><div class="poc-intro-text">Que a lógica de distribuição de preço entre unidades pode ser reproduzida de forma independente, fora da planilha, com precisão de centavo.</div></div>
+      <div class="poc-intro-item"><div class="poc-intro-label">Qual o valor</div><div class="poc-intro-text">Governança, rastreabilidade e capacidade de evolução — a base para um futuro sistema corporativo de precificação.</div></div>
+    </div>
+
     <div class="cards-grid" id="kpi-cards"></div>
 
     <div class="panel-card" style="border-left:4px solid var(--good)">
       <h3>✓ Metodologia reproduzida — 100% a centavo</h3>
-      <div class="desc" style="margin-bottom:0">A lógica de distribuição de preços foi reconstruída e validada independentemente, fora da planilha original — sem depender do resultado já conhecido durante o cálculo. Ver a página <b>Validação</b> para o detalhe executivo.</div>
+      <div class="desc" style="margin-bottom:0">Todas as unidades analisadas foram reproduzidas de forma independente dentro de R$ 0,01 do preço já existente na fonte — nunca acessando esse preço durante o cálculo. Ver a página <b>Validação</b> para o detalhe executivo.</div>
     </div>
 
     <div class="charts-grid">
-      <div class="panel-card"><h3>Preço/m² por pavimento</h3><div class="chart-box"><canvas id="chart-floor"></canvas></div></div>
+      <div class="panel-card"><h3>Preço/m² por pavimento</h3><div class="chart-box"><canvas id="chart-floor"></canvas><div class="empty-state" id="chart-floor-empty" style="display:none"><p>Pavimento não identificado para esta base.</p></div></div></div>
       <div class="panel-card"><h3>Preço × área privativa</h3><div class="chart-box"><canvas id="chart-scatter"></canvas></div></div>
       <div class="panel-card"><h3>Participação por torre</h3><div class="chart-box"><canvas id="chart-tower"></canvas></div></div>
       <div class="panel-card"><h3>Distribuição de preços</h3><div class="chart-box"><canvas id="chart-dist"></canvas></div></div>
-      <div class="panel-card"><h3>Ajustes humanos</h3><div class="desc">Preço sistemático vs. ajuste comercial, por unidade ajustada.</div><div class="chart-box"><canvas id="chart-adjust"></canvas></div></div>
+      <div class="panel-card"><h3>Ajustes humanos</h3><div class="desc">Preço sistemático vs. ajuste comercial, por unidade ajustada.</div><div class="chart-box"><canvas id="chart-adjust"></canvas><div class="empty-state" id="chart-adjust-empty" style="display:none"><p>Nenhum ajuste humano registrado nesta base.</p></div></div></div>
       <div class="panel-card"><h3>Referência × Reprodução</h3><div class="desc">Amostra de unidades — preço já existente vs. recalculado de forma independente.</div><div class="chart-box"><canvas id="chart-refrepro"></canvas></div></div>
     </div>
   </section>
@@ -160,8 +168,8 @@
     </div>
 
     <div class="panel-card">
-      <h3>Calibração por empreendimento</h3>
-      <div class="desc">Os pesos de pavimento e posição são calibrados individualmente para cada empreendimento — não existe uma fórmula universal fixa entre empreendimentos diferentes. Nesta versão, a calibração é somente leitura.</div>
+      <h3>Parâmetros / Calibrações configuráveis</h3>
+      <div class="desc">Os pesos de pavimento e posição são parâmetros configuráveis por empreendimento — não uma lei universal de precificação. Empreendimentos diferentes podem usar conjuntos e versões de calibração diferentes. Nesta versão, a calibração é somente leitura.</div>
       <div class="kv-grid">
         <div class="kv-item"><div class="k">Torres calibradas</div><div class="v" id="prec-towers">—</div></div>
         <div class="kv-item"><div class="k">Tipologias</div><div class="v" id="prec-typologies">—</div></div>
@@ -170,13 +178,16 @@
 
     <div class="panel-card">
       <h3>Ajuste humano / comercial</h3>
-      <div class="desc">Ajuste opcional aplicado por decisão comercial sobre o preço calculado. Nesta versão, somente leitura — campos de motivo, responsável e data serão adicionados numa evolução futura.</div>
+      <div class="desc">Ajuste opcional aplicado por decisão comercial sobre o preço calculado. Nesta versão, somente leitura. Um futuro sistema corporativo poderia preservar, por ajuste: valor calculado, ajuste, valor final, motivo, responsável, data e impacto no VGV.</div>
     </div>
   </section>
 
   <!-- ═══════════════ VALIDAÇÃO ═══════════════ -->
   <section class="panel" id="view-validacao" style="display:none">
     <div class="page-header"><div><div class="page-title">Validação</div><div class="page-subtitle">Preço de referência (já existente) comparado ao preço reproduzido de forma independente.</div></div></div>
+    <div class="panel-card" style="border-left:4px solid var(--navy)">
+      <div class="desc" style="margin-bottom:0">A referência só é utilizada na etapa de validação, depois do cálculo concluído. O preço reproduzido é executado de forma independente, sem acesso à referência durante o cálculo.</div>
+    </div>
     <div class="cards-grid" id="validation-cards"></div>
     <div class="panel-card">
       <h3>Referência × Reprodução</h3>

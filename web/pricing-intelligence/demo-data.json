@@ -759,7 +759,7 @@
     "exact_matches": 40,
     "mae": "0.00",
     "max_absolute_error": "0.00",
-    "note": "Ambiente de demonstração: dados 100% sintéticos, gerados para ilustrar a tela — não repetir os números reais da validação (ver docs/16 e docs/17 para os números reais, sanitizados).",
+    "note": "Ambiente de demonstração: estes números são 100% sintéticos, gerados apenas para ilustrar a tela.",
     "units": [
       {
         "delta_absolute": "0.00",

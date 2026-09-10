@@ -15,6 +15,8 @@
   };
   const fmtNum = (v, d = 2) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
   const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const fmtOrDash = (v, d = 2) => (v == null ? '—' : fmtNum(v, d));
+  const orDash = (v) => (v == null || v === '' ? '—' : v);
 
   /* ── THEME ─────────────────────────────────────────── */
   window.toggleTheme = function () {
@@ -59,7 +61,8 @@
       document.querySelectorAll('.mode-btn').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
       await loadAndRender();
     } catch (err) {
-      alert(err.message);
+      console.error('[setDataMode]', err);
+      document.getElementById('kpi-cards').innerHTML = `<div class="empty-state"><p>Não foi possível carregar os dados.</p><div class="hint">${err.message}</div></div>`;
     }
   };
 
@@ -69,6 +72,8 @@
     state.dataset = dataset;
     document.getElementById('demo-banner').style.display = dataset.meta.mode === 'DEMO' ? 'flex' : 'none';
     document.getElementById('private-mode-item').style.display = window.dataProvider.privateModeAvailable() ? '' : 'none';
+    document.getElementById('poc-mode-note').textContent = dataset.meta.mode === 'PRIVATE'
+      ? 'POC • Dados privados locais' : 'POC • Dados sintéticos';
     renderKpis();
     renderCharts();
     applyUnitFilters();
@@ -88,7 +93,7 @@
       <div class="stat-box"><div class="label">Preço médio / m²</div><div class="value">${fmtMoney(k.avg_price_per_m2)}</div></div>
       <div class="stat-box"><div class="label">Torres</div><div class="value">${fmtInt(k.towers_count)}</div></div>
       <div class="stat-box"><div class="label">Ajustes humanos</div><div class="value">${fmtInt(k.adjustments_count)}</div><div class="hint">${((k.adjustments_count / k.units_count) * 100).toFixed(1)}% das unidades</div></div>
-      <div class="stat-box"><div class="label">Precisão da reprodução</div><div class="value text-good">${k.reproduction_accuracy_pct}%</div><div class="hint">${fmtInt(k.within_1_cent_count)} de ${fmtInt(k.units_count)} a centavo</div></div>
+      <div class="stat-box"><div class="label">Precisão da reprodução</div><div class="value text-good">${k.reproduction_accuracy_pct}%</div><div class="hint">${fmtInt(k.within_1_cent_count)} de ${fmtInt(k.units_count)} unidades dentro de R$ 0,01</div></div>
     `;
   }
 
@@ -120,16 +125,20 @@
       },
     };
 
-    // Preço/m² por pavimento
+    // Preço/m² por pavimento (unidades sem pavimento conhecido são ignoradas neste gráfico)
     const byFloor = {};
-    units.forEach((u) => { (byFloor[u.floor] = byFloor[u.floor] || []).push(Number(u.price_per_m2)); });
+    units.forEach((u) => { if (u.floor == null) return; (byFloor[u.floor] = byFloor[u.floor] || []).push(Number(u.price_per_m2)); });
     const floors = Object.keys(byFloor).map(Number).sort((a, b) => a - b);
     destroyChart('floor');
-    state.charts.floor = new Chart(document.getElementById('chart-floor'), {
-      type: 'line',
-      data: { labels: floors, datasets: [{ label: 'Preço médio/m² por pavimento', data: floors.map((f) => byFloor[f].reduce((a, b) => a + b, 0) / byFloor[f].length), borderColor: colors.navy, backgroundColor: colors.navy, tension: .25 }] },
-      options: baseOpts,
-    });
+    document.getElementById('chart-floor').style.display = floors.length ? '' : 'none';
+    document.getElementById('chart-floor-empty').style.display = floors.length ? 'none' : '';
+    if (floors.length) {
+      state.charts.floor = new Chart(document.getElementById('chart-floor'), {
+        type: 'line',
+        data: { labels: floors, datasets: [{ label: 'Preço médio/m² por pavimento', data: floors.map((f) => byFloor[f].reduce((a, b) => a + b, 0) / byFloor[f].length), borderColor: colors.navy, backgroundColor: colors.navy, tension: .25 }] },
+        options: baseOpts,
+      });
+    }
 
     // Preço x área
     destroyChart('scatter');
@@ -166,17 +175,21 @@
     // Ajustes humanos (waterfall simplificado: sistemático vs ajuste)
     const adjusted = units.filter((u) => Number(u.adjustment) !== 0);
     destroyChart('adjust');
-    state.charts.adjust = new Chart(document.getElementById('chart-adjust'), {
-      type: 'bar',
-      data: {
-        labels: adjusted.map((u) => `${u.tower}/${u.unit_code}`),
-        datasets: [
-          { label: 'Preço sistemático', data: adjusted.map((u) => Number(u.system_price)), backgroundColor: colors.navy },
-          { label: 'Ajuste', data: adjusted.map((u) => Number(u.adjustment)), backgroundColor: colors.gold },
-        ],
-      },
-      options: { ...baseOpts, scales: { ...baseOpts.scales, x: { ...baseOpts.scales.x, stacked: true }, y: { ...baseOpts.scales.y, stacked: true } } },
-    });
+    document.getElementById('chart-adjust').style.display = adjusted.length ? '' : 'none';
+    document.getElementById('chart-adjust-empty').style.display = adjusted.length ? 'none' : '';
+    if (adjusted.length) {
+      state.charts.adjust = new Chart(document.getElementById('chart-adjust'), {
+        type: 'bar',
+        data: {
+          labels: adjusted.map((u) => `${u.tower}/${u.unit_code}`),
+          datasets: [
+            { label: 'Preço sistemático', data: adjusted.map((u) => Number(u.system_price)), backgroundColor: colors.navy },
+            { label: 'Ajuste', data: adjusted.map((u) => Number(u.adjustment)), backgroundColor: colors.gold },
+          ],
+        },
+        options: { ...baseOpts, scales: { ...baseOpts.scales, x: { ...baseOpts.scales.x, stacked: true }, y: { ...baseOpts.scales.y, stacked: true } } },
+      });
+    }
 
     // Referência x Reprodução
     const val = state.dataset.validation.units.slice(0, 20);
@@ -227,9 +240,9 @@
     const pageRows = state.unitsFiltered.slice(start, start + state.pageSize);
     tbody.innerHTML = pageRows.map((u, i) => `
       <tr data-idx="${start + i}">
-        <td>${u.tower}</td><td>${u.unit_code}</td><td>${u.typology}</td>
+        <td>${u.tower}</td><td>${u.unit_code}</td><td>${orDash(u.typology)}</td>
         <td>${fmtNum(u.private_area_m2)} m²</td><td>${fmtNum(u.uncovered_area_m2)} m²</td>
-        <td>${u.floor}</td><td>${u.position}</td>
+        <td>${orDash(u.floor)}</td><td>${orDash(u.position)}</td>
         <td>${fmtMoney(u.price_per_m2)}</td><td>${fmtMoney(u.final_price)}</td>
         <td class="${Number(u.adjustment) !== 0 ? 'text-gold' : 'text-muted'}">${Number(u.adjustment) !== 0 ? fmtMoney(u.adjustment) : '—'}</td>
         <td>${statusBadge(u.status)}</td>
@@ -270,14 +283,14 @@
   function openUnitDrawer(u) {
     const overlay = document.getElementById('unit-drawer-overlay');
     document.getElementById('drawer-title').textContent = `Unidade ${u.unit_code}`;
-    document.getElementById('drawer-sub').textContent = `${u.tower} · ${u.typology} · pavimento ${u.floor}`;
+    document.getElementById('drawer-sub').textContent = `${u.tower} · ${orDash(u.typology)} · pavimento ${orDash(u.floor)}`;
     document.getElementById('drawer-kv').innerHTML = `
       <div class="kv-item"><div class="k">Área privativa</div><div class="v">${fmtNum(u.private_area_m2)} m²</div></div>
       <div class="kv-item"><div class="k">Área descoberta</div><div class="v">${fmtNum(u.uncovered_area_m2)} m²</div></div>
-      <div class="kv-item"><div class="k">Área ponderada</div><div class="v">${fmtNum(u.weighted_area_m2)} m²</div></div>
-      <div class="kv-item"><div class="k">Posição</div><div class="v">${u.position}</div></div>
-      <div class="kv-item"><div class="k">Peso de pavimento</div><div class="v">${fmtNum(u.floor_factor, 3)}</div></div>
-      <div class="kv-item"><div class="k">Peso de posição</div><div class="v">${fmtNum(u.position_factor, 3)}</div></div>
+      <div class="kv-item"><div class="k">Área ponderada</div><div class="v">${fmtOrDash(u.weighted_area_m2)} m²</div></div>
+      <div class="kv-item"><div class="k">Posição</div><div class="v">${orDash(u.position)}</div></div>
+      <div class="kv-item"><div class="k">Peso de pavimento</div><div class="v">${fmtOrDash(u.floor_factor, 3)}</div></div>
+      <div class="kv-item"><div class="k">Peso de posição</div><div class="v">${fmtOrDash(u.position_factor, 3)}</div></div>
     `;
     const hasAdj = Number(u.adjustment) !== 0;
     document.getElementById('drawer-price').innerHTML = `
@@ -285,7 +298,7 @@
       ${hasAdj ? `<div class="row"><span class="op">+</span><span>Ajuste humano/comercial</span><span class="text-gold">${fmtMoney(u.adjustment)}</span></div>` : ''}
       <div class="row total"><span>Preço final</span><span>${fmtMoney(u.final_price)}</span></div>
       <div class="row"><span>Preço/m²</span><span>${fmtMoney(u.price_per_m2)}</span></div>
-      <div class="row"><span>Participação relativa</span><span>${(Number(u.participation_share) * 100).toFixed(4)}%</span></div>
+      <div class="row"><span>Participação relativa</span><span>${u.participation_share == null ? '—' : (Number(u.participation_share) * 100).toFixed(4) + '%'}</span></div>
     `;
     document.getElementById('drawer-status').innerHTML = statusBadge(u.status);
     overlay.classList.add('open');
@@ -296,8 +309,8 @@
   function renderValidation() {
     const v = state.dataset.validation;
     document.getElementById('validation-cards').innerHTML = `
-      <div class="stat-box"><div class="label">Unidades analisadas</div><div class="value">${fmtInt(v.units_analyzed)}</div></div>
-      <div class="stat-box"><div class="label">Correspondências a centavo</div><div class="value text-good">${fmtInt(v.within_1_cent)}</div></div>
+      <div class="stat-box"><div class="label">Unidades avaliadas</div><div class="value">${fmtInt(v.units_analyzed)}</div></div>
+      <div class="stat-box"><div class="label">Dentro de R$ 0,01</div><div class="value text-good">${fmtInt(v.within_1_cent)}</div><div class="hint">de ${fmtInt(v.units_analyzed)} unidades</div></div>
       <div class="stat-box"><div class="label">Precisão</div><div class="value text-good">${((v.within_1_cent / v.units_analyzed) * 100).toFixed(1)}%</div></div>
       <div class="stat-box"><div class="label">Diferença agregada</div><div class="value">${fmtMoney(v.aggregate_delta)}</div></div>
     `;

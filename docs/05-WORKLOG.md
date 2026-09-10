@@ -6,6 +6,93 @@ uma entrada aqui.
 
 ---
 
+## 2026-09-10 — Fase 3F: Encerramento da POC e pacote de entrega (Claude Code)
+
+**Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.
+**Escopo:** encerrar o ciclo atual como prova de conceito funcional —
+`FEATURE_FREEZE=SIM` (ver [[04-DECISIONS]] D16). Polimento, clareza,
+documentação, segurança e entrega — nenhuma funcionalidade nova.
+
+**Identificação de POC na interface:** selo "Prova de Conceito" na
+barra lateral (tooltip com o texto completo), nota de rodapé
+sensível ao modo ("POC • Dados privados locais" / "POC • Dados
+sintéticos"), bloco "O que é / O que foi provado / Qual o valor" na
+Visão Geral.
+
+**Linguagem de validação corrigida:** revisão de todos os textos que
+poderiam implicar igualdade decimal absoluta. "884 de 884 unidades
+dentro de R$ 0,01" substitui formulações vagas; "100% a centavo"
+mantido apenas com o texto detalhado correto ao lado; removidas
+referências técnicas a números de documento (`docs/16`, `docs/17`)
+dos textos voltados ao usuário final.
+
+**Defeito real encontrado e corrigido durante a verificação PRIVATE
+end-to-end:** ao ativar o modo PRIVATE contra o banco real, a troca
+de modo ficava indefinidamente sem resposta (timeouts de automação de
+navegador consistentes, mesmo para leituras triviais de estado).
+Diagnóstico por instrumentação temporária de `app.js` revelou a causa
+raiz: **100% das 884 unidades reais têm `floor = NULL`** (campo nunca
+preenchido na ingestão) — a lógica de agrupamento por pavimento do
+gráfico "Preço/m² por pavimento" produzia uma chave `NaN`/`undefined`
+que, ao ser usada num `.reduce()`, lançava `TypeError`. Essa exceção
+subia até o `catch` de `setDataMode`, que chamava `alert(err.message)`
+— um diálogo nativo do navegador que bloqueia a aba inteira,
+inclusive para ferramentas de automação (exatamente o padrão descrito
+como risco nas instruções de uso do navegador automatizado). Corrigido
+em duas frentes, ambas em `web/pricing-intelligence/app.js`: (1)
+unidades sem pavimento conhecido são ignoradas no agrupamento, com
+estado vazio explicativo ("Pavimento não identificado para esta
+base.") em vez de gráfico quebrado; (2) o `catch` de `setDataMode`
+deixou de usar `alert()`, substituído por uma mensagem inline não
+bloqueante — consistente com o padrão já usado no handler de
+inicialização. O mesmo padrão de "número sem contexto" foi corrigido
+para: área ponderada, participação relativa e pesos de calibração
+(agora exibem "—" quando o valor não está disponível, em vez de
+"0,00"/"0,0000%", que poderiam ser confundidos com o valor real —
+confirmado via consulta direta ao banco que `weighted_area_m2` e
+`participation_share` são `NULL`, não zero, para os 884 registros
+reais); pavimento e tipologia vazios (string `''`/`null`) também
+passaram a exibir "—" em vez de "null"/vazio na tabela de Unidades e
+no painel de detalhe. `scripts/pricing_preview_server.py` ajustado
+para não mais mascarar `NULL` como `0` via `COALESCE` nesses dois
+campos, propagando o `NULL` real até o frontend.
+
+**Verificação PRIVATE completa após a correção:** Visão Geral
+(884 unidades, VGV real R$ 457.620.669,49, 100% de precisão),
+Unidades (tabela + drawer de detalhe com "—" nos campos ausentes),
+Validação (884/884 dentro de R$ 0,01), Auditoria — todas renderizando
+corretamente, sem nenhuma escrita no banco (servidor somente leitura).
+
+**Calibrações / ajuste humano — linguagem revisada:** "Calibração por
+empreendimento" renomeado para "Parâmetros / Calibrações
+configuráveis", reforçando que não é lei universal e que diferentes
+empreendimentos podem ter conjuntos/versões diferentes. Descrição do
+ajuste humano/comercial passou a listar explicitamente os campos
+futuros (valor calculado, ajuste, valor final, motivo, responsável,
+data, impacto no VGV) — permanece somente leitura nesta versão.
+
+**Status formal do Motor B registrado** (ver [[20-POC-CLOSURE]]):
+`MATHEMATICAL_REPRODUCTION=VALIDATED`, `UNITS=884`,
+`CENT_PRECISION_COVERAGE=884/884`, `DATABASE_MODEL=VALIDATED`,
+`LINEAGE=VALIDATED`, `PRIVATE_RUNTIME=VALIDATED`,
+`DEMO_RUNTIME=VALIDATED`, `BUSINESS_SEMANTICS=PARTIAL` (não
+bloqueador).
+
+**Pacote de entrega privado criado** em
+`data/restricted/deliverables/` (nunca versionado):
+`RELATORIO-EXECUTIVO-PATRIMAR-PRICING-INTELLIGENCE-POC.md`,
+`RESUMO-EXECUTIVO-1-PAGINA.md`, `ROTEIRO-DEMONSTRACAO.md`,
+`FAQ-APRESENTADOR.md`, `CHECKLIST-APRESENTACAO.md`. Nenhum contém
+proposta comercial (sem preço, mensalidade, prazo ou orçamento).
+
+**Documentação pública:** [[20-POC-CLOSURE]] (novo);
+[[03-ROADMAP]], [[04-DECISIONS]] (D16), este arquivo e
+[[99-HANDOFF]] atualizados.
+
+**Testes, privacy scan, tag e deploy:** ver [[99-HANDOFF]] para o
+resultado exato (executados na sequência imediata desta mesma
+sessão, depois de todas as correções acima).
+
 ## 2026-09-10 — Fase 3E: Produto oficial — Patrimar Pricing Intelligence (Claude Code)
 
 **Executor:** Claude Code (Sonnet 5), a pedido de Gustavo Santos.

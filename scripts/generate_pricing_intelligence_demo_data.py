@@ -116,8 +116,7 @@ def build_demo_dataset() -> dict:
             "max_absolute_error": "0.00",
             "aggregate_delta": "0.00",
             "classification": "DEMO_ILLUSTRATIVO",
-            "note": "Ambiente de demonstração: dados 100% sintéticos, gerados para ilustrar a tela — "
-                    "não repetir os números reais da validação (ver docs/16 e docs/17 para os números reais, sanitizados).",
+            "note": "Ambiente de demonstração: estes números são 100% sintéticos, gerados apenas para ilustrar a tela.",
             "units": validation_units,
         },
     }

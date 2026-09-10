@@ -2,6 +2,33 @@
 
 ## Fase atual
 
+**FASE 3F — Encerramento da prova de conceito e pacote de entrega.**
+Executada em 2026-09-10 (ver [[05-WORKLOG]] e [[20-POC-CLOSURE]]).
+Encerra o ciclo atual como **prova de conceito funcional** —
+`FEATURE_FREEZE=SIM` a partir desta fase (nenhum login, permissão,
+workflow corporativo, edição produtiva, integração ERP/CRM, Motor A
+operacional, novo modelo de ML ou agente foi adicionado). Trabalho
+puramente de polimento, clareza, documentação, segurança e entrega:
+selo "Prova de Conceito" e nota de modo (PRIVATE/DEMO) na interface;
+linguagem de precisão de reprodução corrigida para nunca implicar
+igualdade decimal absoluta ("884 de 884 dentro de R$ 0,01", nunca
+"zero diferença decimal"); revisão visual das 7 telas. Durante a
+verificação end-to-end do modo PRIVATE contra o banco real, um
+defeito genuíno foi encontrado e corrigido: unidades reais sem
+pavimento identificado (100% das 884 unidades reais têm
+`floor = NULL`) faziam um gráfico lançar exceção não tratada, que
+acionava um `alert()` nativo bloqueando a aba inteira — corrigido na
+lógica de agrupamento e substituindo o tratamento de erro por uma
+mensagem inline não bloqueante; campos indisponíveis (área
+ponderada, participação relativa, pesos de calibração) passaram a
+exibir "—" em vez de um zero que poderia ser confundido com valor
+real. Motor B formalizado como `MATHEMATICAL_REPRODUCTION=VALIDATED`,
+`CENT_PRECISION_COVERAGE=884/884`, `BUSINESS_SEMANTICS=PARTIAL` (não
+bloqueador). Pacote de entrega (relatório executivo, resumo de 1
+página, roteiro de demonstração, FAQ, checklist) criado em
+`data/restricted/deliverables/` — privado, nunca versionado, sem
+proposta comercial (sem preço, prazo ou orçamento).
+
 **FASE 3E — Produto oficial: Patrimar Pricing Intelligence.**
 Executada em 2026-09-10 (ver [[05-WORKLOG]],
 [[18-PRICING-INTELLIGENCE-MVP]] e [[19-DEPLOYMENT-AND-DEMO-MODE]]).

@@ -74,12 +74,12 @@ unit_rows AS (
     COALESCE(u.position_code, u.position_type, '') AS position,
     (u.closed_area_m2 + u.balcony_area_m2 + u.ancillary_area_m2) AS private_area_m2,
     u.open_terrace_area_m2 AS uncovered_area_m2,
-    COALESCE(upr.weighted_area_m2, 0) AS weighted_area_m2,
+    upr.weighted_area_m2,
     upr.system_calculated_price,
     lo.final_price AS override_final_price,
     COALESCE(lo.final_price, upr.system_calculated_price) AS final_price,
     upr.system_calculated_price_per_m2,
-    COALESCE(upr.participation_share, 0) AS participation_share
+    upr.participation_share
   FROM latest_run lr
   JOIN pricing.unit_price_results upr ON upr.run_id = lr.run_id
   JOIN core.units u ON u.id = upr.unit_id
@@ -168,7 +168,7 @@ SELECT json_build_object(
     SELECT json_build_object(
       'units_analyzed', units_analyzed, 'exact_matches', exact_matches, 'within_1_cent', within_1_cent,
       'mae', round(mae, 2), 'max_absolute_error', round(max_absolute_error, 2), 'aggregate_delta', round(aggregate_delta, 2),
-      'classification', 'PRIVATE_REAL', 'note', 'Comparacao real contra a referencia importada (ver docs/16 e docs/17).',
+      'classification', 'PRIVATE_REAL', 'note', 'Comparacao real: preco de referencia (ja existente) contra o preco reproduzido de forma independente.',
       'units', (SELECT COALESCE(json_agg(json_build_object(
         'tower', tower, 'unit_code', unit_code, 'reference_price', source_reference_price,
         'reproduced_price', reproduced_price, 'delta_absolute', delta_absolute, 'match_classification', match_classification
